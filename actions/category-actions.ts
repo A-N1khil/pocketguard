@@ -1,3 +1,5 @@
+"use server";
+
 import {
 	Category,
 	CategoryDTO,
@@ -7,6 +9,7 @@ import {
 	SubCategorySchema,
 } from "@/models/category-model";
 import { db } from "@/index";
+import { categoryTable, subCategoryTable } from "@/db/schema";
 
 export async function getCategoryById(
 	id: number,
@@ -63,5 +66,10 @@ export async function getSubCategoryById(
 	return null;
 }
 
-const values = await getSubCategoryById(1, 1);
-console.log(values);
+export async function getAllCategories(): Promise<Category[]> {
+	return await db.select().from(categoryTable);
+}
+
+export async function getAllSubCategories(): Promise<SubCategorySchema[]> {
+	return await db.select().from(subCategoryTable);
+}
