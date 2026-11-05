@@ -23,14 +23,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import {
-	Dialog,
-	DialogContent,
-	DialogClose,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
 import { Category, SubCategorySchema } from "@/models/category-model";
 import { useEffect, useState } from "react";
 import {
@@ -38,6 +30,16 @@ import {
 	getAllSubCategories,
 } from "@/actions/category-actions";
 import CreateCategoryDrawer from "@/components/create-category-drawer";
+import {
+	DialogStack,
+	DialogStackBody,
+	DialogStackContent,
+	DialogStackDescription,
+	DialogStackHeader,
+	DialogStackNext,
+	DialogStackOverlay,
+	DialogStackTitle,
+} from "@/components/kibo-ui/dialog-stack";
 
 const newTransactionSchema = z.object({
 	title: z.string().trim().min(5, "Title must be at least 5 characters"),
@@ -119,223 +121,245 @@ export default function TransactionForm({
 
 	return (
 		<>
-			<Dialog open={openDialog} onOpenChange={setOpenDialog}>
-				<DialogContent className="sm:max-w-2xl">
-					<DialogHeader>
-						<DialogTitle>Create transaction</DialogTitle>
-						<DialogDescription>
-							Enter the details of your transaction.
-						</DialogDescription>
-					</DialogHeader>
-					<form onSubmit={handleSubmit(handleTransactionSubmit)} noValidate>
-						<FieldGroup>
-							<Field data-invalid={Boolean(errors.title)}>
-								<FieldLabel htmlFor="title">Title</FieldLabel>
-								<Input
-									id="title"
-									type="text"
-									placeholder="Random Purchase"
-									{...register("title")}
-									aria-invalid={Boolean(errors.title)}
-									aria-describedby={`title-description${errors.title ? " title-error" : ""}`}
-								/>
-								<FieldDescription id="title-description">
-									Use at least 5 characters to describe the transaction.
-								</FieldDescription>
-								<FieldError id="title-error" errors={[errors.title]} />
-							</Field>
-							<Controller
-								name="transactionType"
-								control={control}
-								render={({ field, fieldState }) => (
-									<Field data-invalid={fieldState.invalid}>
-										<FieldLabel htmlFor="transactionType">
-											Transaction type
-										</FieldLabel>
-										<Select
-											name={field.name}
-											value={field.value}
-											onValueChange={field.onChange}
-										>
-											<SelectTrigger
-												id="transactionType"
-												ref={field.ref}
-												onBlur={field.onBlur}
-												aria-invalid={fieldState.invalid}
-												aria-describedby={`transactionType-description${fieldState.error ? " transactionType-error" : ""}`}
-												className="w-full"
-											>
-												<SelectValue />
-											</SelectTrigger>
-											<SelectContent>
-												<SelectItem value="DEBIT">Debit</SelectItem>
-												<SelectItem value="CREDIT">Credit</SelectItem>
-											</SelectContent>
-										</Select>
-										<FieldDescription id="transactionType-description">
-											Choose credit for money received or debit for money spent.
-										</FieldDescription>
-										<FieldError
-											id="transactionType-error"
-											errors={[fieldState.error]}
-										/>
-									</Field>
-								)}
-							/>
-							<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+			<DialogStack onOpenChange={setOpenDialog} open={openDialog}>
+				<DialogStackOverlay />
+				<DialogStackBody>
+					{/* Create transaction dialog */}
+					<DialogStackContent>
+						<DialogStackHeader>
+							<DialogStackTitle>Create transaction</DialogStackTitle>
+							<DialogStackDescription>
+								Enter the details of your transaction.
+							</DialogStackDescription>
+						</DialogStackHeader>
+						<form onSubmit={handleSubmit(handleTransactionSubmit)} noValidate>
+							<FieldGroup>
+								<Field data-invalid={Boolean(errors.title)}>
+									<FieldLabel htmlFor="title">Title</FieldLabel>
+									<Input
+										id="title"
+										type="text"
+										placeholder="Random Purchase"
+										{...register("title")}
+										aria-invalid={Boolean(errors.title)}
+										aria-describedby={`title-description${errors.title ? " title-error" : ""}`}
+									/>
+									<FieldDescription id="title-description">
+										Use at least 5 characters to describe the transaction.
+									</FieldDescription>
+									<FieldError id="title-error" errors={[errors.title]} />
+								</Field>
 								<Controller
-									name="categoryId"
+									name="transactionType"
 									control={control}
-									render={({ field }) => (
-										<Field>
-											<FieldLabel htmlFor="category">Category</FieldLabel>
-											<Select
-												name={field.name}
-												value={field.value}
-												onValueChange={(value) => {
-													field.onChange(value);
-													setCurrentCategory(
-														categories.find(
-															(category) => category.id === value,
-														),
-													);
-													setValue("subCategoryId", null, {
-														shouldValidate: true,
-														shouldDirty: true,
-													});
-												}}
-											>
-												<SelectTrigger
-													id="category"
-													ref={field.ref}
-													onBlur={field.onBlur}
-													aria-describedby="category-description"
-													className="w-full"
-												>
-													<SelectValue placeholder="Select a Category">
-														{
-															categories.find(
-																(category) => category.id === field.value,
-															)?.name
-														}
-													</SelectValue>
-												</SelectTrigger>
-												<SelectContent>
-													{categories.map((category) => (
-														<SelectItem key={category.id} value={category.id}>
-															{category.name}
-														</SelectItem>
-													))}
-												</SelectContent>
-											</Select>
-											<FieldDescription id="category-description">
-												Choose a category for this transaction.
-											</FieldDescription>
-										</Field>
-									)}
-								/>
-								<Controller
-									name="subCategoryId"
-									control={control}
-									render={({ field }) => (
-										<Field>
-											<FieldLabel htmlFor="subcategory">Subcategory</FieldLabel>
+									render={({ field, fieldState }) => (
+										<Field data-invalid={fieldState.invalid}>
+											<FieldLabel htmlFor="transactionType">
+												Transaction type
+											</FieldLabel>
 											<Select
 												name={field.name}
 												value={field.value}
 												onValueChange={field.onChange}
-												disabled={
-													!currentCategory || currentSubCategories.length === 0
-												}
 											>
 												<SelectTrigger
-													id="subcategory"
+													id="transactionType"
 													ref={field.ref}
 													onBlur={field.onBlur}
-													aria-describedby="subcategory-description"
+													aria-invalid={fieldState.invalid}
+													aria-describedby={`transactionType-description${fieldState.error ? " transactionType-error" : ""}`}
 													className="w-full"
 												>
-													<SelectValue
-														placeholder={
-															!currentCategory
-																? "Select a Category"
-																: currentSubCategories.length === 0
-																	? "No SubCategory for current category"
-																	: "Select a Subcategory"
-														}
-													>
-														{
-															currentSubCategories.find(
-																(subCategory) => subCategory.id === field.value,
-															)?.name
-														}
-													</SelectValue>
+													<SelectValue />
 												</SelectTrigger>
 												<SelectContent>
-													{currentSubCategories.map((subCategory) => (
-														<SelectItem
-															key={subCategory.id}
-															value={subCategory.id}
-														>
-															{subCategory.name}
-														</SelectItem>
-													))}
+													<SelectItem value="DEBIT">Debit</SelectItem>
+													<SelectItem value="CREDIT">Credit</SelectItem>
 												</SelectContent>
 											</Select>
-											<FieldDescription id="subcategory-description">
-												Choose a subcategory when one is available.
+											<FieldDescription id="transactionType-description">
+												Choose credit for money received or debit for money
+												spent.
 											</FieldDescription>
+											<FieldError
+												id="transactionType-error"
+												errors={[fieldState.error]}
+											/>
 										</Field>
 									)}
 								/>
-							</div>
-							<Field data-invalid={Boolean(errors.amount)}>
-								<FieldLabel htmlFor="amount">Amount</FieldLabel>
-								<InputGroup>
-									<InputGroupAddon>
-										<InputGroupText>$</InputGroupText>
-									</InputGroupAddon>
-									<InputGroupInput
-										id="amount"
-										type="number"
-										inputMode="decimal"
-										min="0.01"
-										step="0.01"
-										placeholder="0.00"
-										{...register("amount", { valueAsNumber: true })}
-										aria-invalid={Boolean(errors.amount)}
-										aria-describedby={`amount-description${errors.amount ? " amount-error" : ""}`}
+								<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+									<Controller
+										name="categoryId"
+										control={control}
+										render={({ field }) => (
+											<Field>
+												<FieldLabel htmlFor="category">Category</FieldLabel>
+												<Select
+													name={field.name}
+													value={field.value}
+													onValueChange={(value) => {
+														field.onChange(value);
+														setCurrentCategory(
+															categories.find(
+																(category) => category.id === value,
+															),
+														);
+														setValue("subCategoryId", null, {
+															shouldValidate: true,
+															shouldDirty: true,
+														});
+													}}
+												>
+													<SelectTrigger
+														id="category"
+														ref={field.ref}
+														onBlur={field.onBlur}
+														aria-describedby="category-description"
+														className="w-full"
+													>
+														<SelectValue placeholder="Select a Category">
+															{
+																categories.find(
+																	(category) => category.id === field.value,
+																)?.name
+															}
+														</SelectValue>
+													</SelectTrigger>
+													<SelectContent>
+														{categories.map((category) => (
+															<SelectItem key={category.id} value={category.id}>
+																{category.name}
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
+												<FieldDescription id="category-description">
+													Choose a category for this transaction.
+												</FieldDescription>
+											</Field>
+										)}
 									/>
-									<InputGroupAddon align="inline-end">
-										<InputGroupText>USD</InputGroupText>
-									</InputGroupAddon>
-								</InputGroup>
-								<FieldDescription id="amount-description">
-									Enter a positive amount in USD.
-								</FieldDescription>
-								<FieldError id="amount-error" errors={[errors.amount]} />
-							</Field>
-							<div className="flex justify-end gap-2">
-								<DialogClose
-									render={<Button type="button" variant="outline" />}
-								>
-									Cancel
-								</DialogClose>
-								<Button type="submit" disabled={!isValid || isSubmitting}>
-									{isSubmitting ? "Creating…" : "Create transaction"}
-								</Button>
-								<Button
-									type="button"
-									onClick={() => setNewCategoryDrawer(true)}
-								>
-									Open Sesame
-								</Button>
-							</div>
-						</FieldGroup>
-					</form>
-				</DialogContent>
-			</Dialog>
-			<CreateCategoryDrawer drawer={drawerProp} />
+									<Controller
+										name="subCategoryId"
+										control={control}
+										render={({ field }) => (
+											<Field>
+												<FieldLabel htmlFor="subcategory">
+													Subcategory
+												</FieldLabel>
+												<Select
+													name={field.name}
+													value={field.value}
+													onValueChange={field.onChange}
+													disabled={
+														!currentCategory ||
+														currentSubCategories.length === 0
+													}
+												>
+													<SelectTrigger
+														id="subcategory"
+														ref={field.ref}
+														onBlur={field.onBlur}
+														aria-describedby="subcategory-description"
+														className="w-full"
+													>
+														<SelectValue
+															placeholder={
+																!currentCategory
+																	? "Select a Category"
+																	: currentSubCategories.length === 0
+																		? "No SubCategory for current category"
+																		: "Select a Subcategory"
+															}
+														>
+															{
+																currentSubCategories.find(
+																	(subCategory) =>
+																		subCategory.id === field.value,
+																)?.name
+															}
+														</SelectValue>
+													</SelectTrigger>
+													<SelectContent>
+														{currentSubCategories.map((subCategory) => (
+															<SelectItem
+																key={subCategory.id}
+																value={subCategory.id}
+															>
+																{subCategory.name}
+															</SelectItem>
+														))}
+													</SelectContent>
+												</Select>
+												<FieldDescription id="subcategory-description">
+													Choose a subcategory when one is available.
+												</FieldDescription>
+											</Field>
+										)}
+									/>
+								</div>
+								<DialogStackNext className="text-xs text-left" asChild>
+									<p className="hover:underline">
+										Can&apos;t find your category? Create a new one!
+									</p>
+								</DialogStackNext>
+								<Field data-invalid={Boolean(errors.amount)}>
+									<FieldLabel htmlFor="amount">Amount</FieldLabel>
+									<InputGroup>
+										<InputGroupAddon>
+											<InputGroupText>$</InputGroupText>
+										</InputGroupAddon>
+										<InputGroupInput
+											id="amount"
+											type="number"
+											inputMode="decimal"
+											min="0.01"
+											step="0.01"
+											placeholder="0.00"
+											{...register("amount", { valueAsNumber: true })}
+											aria-invalid={Boolean(errors.amount)}
+											aria-describedby={`amount-description${errors.amount ? " amount-error" : ""}`}
+										/>
+										<InputGroupAddon align="inline-end">
+											<InputGroupText>USD</InputGroupText>
+										</InputGroupAddon>
+									</InputGroup>
+									<FieldDescription id="amount-description">
+										Enter a positive amount in USD.
+									</FieldDescription>
+									<FieldError id="amount-error" errors={[errors.amount]} />
+								</Field>
+								<div className="flex justify-end gap-2">
+									<Button
+										type="button"
+										variant="outline"
+										onClick={() => setOpenDialog(false)}
+									>
+										Cancel
+									</Button>
+									<Button type="submit" disabled={!isValid || isSubmitting}>
+										{isSubmitting ? "Creating…" : "Create transaction"}
+									</Button>
+									<Button
+										type="button"
+										onClick={() => setNewCategoryDrawer(true)}
+									>
+										Open Sesame
+									</Button>
+								</div>
+							</FieldGroup>
+						</form>
+						<DialogStackNext className="text-xs text-left">
+							Can&apos;t find your category? Create a new one!
+						</DialogStackNext>
+					</DialogStackContent>
+
+					<DialogStackContent>
+						<CreateCategoryDrawer />
+					</DialogStackContent>
+				</DialogStackBody>
+			</DialogStack>
 		</>
 	);
 }
