@@ -12,6 +12,10 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+	DialogStackContent,
+	DialogStackPrevious,
+} from "@/components/kibo-ui/dialog-stack";
 
 const newCategorySchema = z.object({
 	name: z.string().min(3, "Minimum name length should be 3"),
@@ -25,11 +29,13 @@ type newCategory = z.infer<typeof newCategorySchema>;
 type newSubcategory = z.infer<typeof newSubCategorySchema>;
 
 type CreateCategoryDrawerProps = {
+	setStackActiveIndex: (index: number) => void;
 	category?: Category;
 };
 
-export default function CreateCategoryDrawer({
+export default function CreateCategoryForm({
 	category,
+	setStackActiveIndex,
 }: CreateCategoryDrawerProps) {
 	const [addSubcategory, setAddSubCategory] = useState<boolean>(false);
 	const [currentCategory, setCurrentCategory] = useState<Category | undefined>(
@@ -73,6 +79,13 @@ export default function CreateCategoryDrawer({
 						<div className="flex justify-end gap-2">
 							<Button type="submit" disabled={!isValid || isSubmitting}>
 								{isSubmitting ? "Creating…" : "Create transaction"}
+							</Button>
+							<Button
+								type="button"
+								variant={"outline"}
+								onClick={() => setStackActiveIndex(0)}
+							>
+								Back to Transaction
 							</Button>
 						</div>
 					</FieldGroup>

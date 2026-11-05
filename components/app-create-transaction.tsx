@@ -29,7 +29,7 @@ import {
 	getAllCategories,
 	getAllSubCategories,
 } from "@/actions/category-actions";
-import CreateCategoryDrawer from "@/components/create-category-drawer";
+import CreateCategoryForm from "@/components/create-category-form";
 import {
 	DialogStack,
 	DialogStackBody,
@@ -74,6 +74,8 @@ export default function TransactionForm({
 	const [currentCategory, setCurrentCategory] = useState<Category>();
 	const [subCategories, setSubCategories] = useState<SubCategorySchema[]>([]);
 	const [newCategoryDrawer, setNewCategoryDrawer] = useState<boolean>(false);
+	const [dialogStackActiveIndex, setDialogStackActiveIndex] =
+		useState<number>(0);
 	const drawerProp = {
 		openDrawer: newCategoryDrawer,
 		setOpenDrawer: setNewCategoryDrawer,
@@ -121,7 +123,12 @@ export default function TransactionForm({
 
 	return (
 		<>
-			<DialogStack onOpenChange={setOpenDialog} open={openDialog}>
+			<DialogStack
+				onOpenChange={setOpenDialog}
+				open={openDialog}
+				activeIndexProp={dialogStackActiveIndex}
+				onActiveIndexChange={setDialogStackActiveIndex}
+			>
 				<DialogStackOverlay />
 				<DialogStackBody>
 					{/* Create transaction dialog */}
@@ -354,9 +361,10 @@ export default function TransactionForm({
 							Can&apos;t find your category? Create a new one!
 						</DialogStackNext>
 					</DialogStackContent>
-
 					<DialogStackContent>
-						<CreateCategoryDrawer />
+						<CreateCategoryForm
+							setStackActiveIndex={setDialogStackActiveIndex}
+						/>
 					</DialogStackContent>
 				</DialogStackBody>
 			</DialogStack>
