@@ -26,6 +26,7 @@ import { Separator } from "@/components/ui/separator";
 const newCategorySchema = z.object({
 	name: z
 		.string()
+		.trim()
 		.min(3, "Minimum name length should be 3")
 		.superRefine(async (name, ctx) => {
 			if (name.length < 3) return;
@@ -51,13 +52,11 @@ type NewCategory = z.infer<typeof newCategorySchema>;
 
 type CreateCategoryDrawerProps = {
 	setStackActiveIndex: (index: number) => void;
-	category?: Category;
 };
 
 type SubmitState = "PENDING" | "SUBMITTING" | "DONE" | "ERROR";
 
 export default function CreateCategoryForm({
-	category,
 	setStackActiveIndex,
 }: CreateCategoryDrawerProps) {
 	const [submitState, setSubmitState] = useState<SubmitState>("PENDING");
@@ -72,7 +71,7 @@ export default function CreateCategoryForm({
 		mode: "onChange",
 		reValidateMode: "onChange",
 		defaultValues: {
-			name: category?.name || "",
+			name: "",
 		},
 	});
 
