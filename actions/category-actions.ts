@@ -82,6 +82,15 @@ export async function getCategoryByName(
 	});
 }
 
+export async function getSubCategoryByName(
+	category: Category,
+	subcategoryName: string,
+): Promise<SubCategorySchema | undefined> {
+	return await db.query.sc.findFirst({
+		where: { name: subcategoryName, categoryId: category.id },
+	});
+}
+
 export async function createCategory(categoryName: string): Promise<Category> {
 	const insertedCategory: Category[] = await db
 		.insert(categoryTable)
@@ -89,4 +98,16 @@ export async function createCategory(categoryName: string): Promise<Category> {
 		.returning();
 
 	return insertedCategory[0];
+}
+
+export async function createSubCategory(
+	category: Category,
+	subCategoryName: string,
+): Promise<SubCategorySchema> {
+	const insertedSubCategory: SubCategorySchema[] = await db
+		.insert(subCategoryTable)
+		.values({ categoryId: category.id, name: subCategoryName })
+		.returning();
+
+	return insertedSubCategory[0];
 }

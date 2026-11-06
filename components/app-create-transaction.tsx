@@ -30,16 +30,14 @@ import {
 	getAllSubCategories,
 } from "@/actions/category-actions";
 import CreateCategoryForm from "@/components/create-category-form";
+import { Drawer } from "@/components/ui/drawer";
 import {
-	DialogStack,
-	DialogStackBody,
-	DialogStackContent,
-	DialogStackDescription,
-	DialogStackHeader,
-	DialogStackNext,
-	DialogStackOverlay,
-	DialogStackTitle,
-} from "@/components/kibo-ui/dialog-stack";
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 
 const newTransactionSchema = z.object({
 	title: z.string().trim().min(5, "Title must be at least 5 characters"),
@@ -73,8 +71,7 @@ export default function TransactionForm({
 	const [categories, setCategories] = useState<Category[]>([]);
 	const [currentCategory, setCurrentCategory] = useState<Category>();
 	const [subCategories, setSubCategories] = useState<SubCategorySchema[]>([]);
-	const [dialogStackActiveIndex, setDialogStackActiveIndex] =
-		useState<number>(0);
+	const [openDrawer, setOpenDrawer] = useState<boolean>(false);
 
 	// Fetch categories and subcategories upon component load
 	useEffect(() => {
@@ -118,22 +115,16 @@ export default function TransactionForm({
 
 	return (
 		<>
-			<DialogStack
-				onOpenChange={setOpenDialog}
-				open={openDialog}
-				activeIndexProp={dialogStackActiveIndex}
-				onActiveIndexChange={setDialogStackActiveIndex}
-			>
-				<DialogStackOverlay />
-				<DialogStackBody>
+			<div className="flex">
+				<Dialog onOpenChange={setOpenDialog} open={openDialog}>
 					{/* Create transaction dialog */}
-					<DialogStackContent>
-						<DialogStackHeader>
-							<DialogStackTitle>Create transaction</DialogStackTitle>
-							<DialogStackDescription>
+					<DialogContent className="sm:max-w-1/3">
+						<DialogHeader>
+							<DialogTitle>Create transaction</DialogTitle>
+							<DialogDescription>
 								Enter the details of your transaction.
-							</DialogStackDescription>
-						</DialogStackHeader>
+							</DialogDescription>
+						</DialogHeader>
 						<form onSubmit={handleSubmit(handleTransactionSubmit)} noValidate>
 							<FieldGroup>
 								<Field data-invalid={Boolean(errors.title)}>
@@ -301,11 +292,15 @@ export default function TransactionForm({
 										)}
 									/>
 								</div>
-								<DialogStackNext className="text-xs text-left" asChild>
-									<p className="hover:underline">
-										Can&apos;t find your category? Create a new one!
-									</p>
-								</DialogStackNext>
+								<p className="text-xs text-left">
+									<a
+										href="#"
+										className="hover:underline"
+										onClick={() => setOpenDrawer(true)}
+									>
+										Can&apos;t find your category?&nbsp;Create a new one!
+									</a>
+								</p>
 								<Field data-invalid={Boolean(errors.amount)}>
 									<FieldLabel htmlFor="amount">Amount</FieldLabel>
 									<InputGroup>
@@ -346,17 +341,16 @@ export default function TransactionForm({
 								</div>
 							</FieldGroup>
 						</form>
-						<DialogStackNext className="text-xs text-left">
-							Can&apos;t find your category? Create a new one!
-						</DialogStackNext>
-					</DialogStackContent>
-					<DialogStackContent>
-						<CreateCategoryForm
-							setStackActiveIndex={setDialogStackActiveIndex}
-						/>
-					</DialogStackContent>
-				</DialogStackBody>
-			</DialogStack>
+					</DialogContent>
+				</Dialog>
+			</div>
+			<Drawer
+				open={openDrawer}
+				onOpenChange={setOpenDrawer}
+				swipeDirection="right"
+			>
+				<CreateCategoryForm />
+			</Drawer>
 		</>
 	);
 }
