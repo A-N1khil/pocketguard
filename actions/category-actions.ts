@@ -73,3 +73,20 @@ export async function getAllCategories(): Promise<Category[]> {
 export async function getAllSubCategories(): Promise<SubCategorySchema[]> {
 	return await db.select().from(subCategoryTable);
 }
+
+export async function getCategoryByName(
+	categoryName: string,
+): Promise<Category | undefined> {
+	return await db.query.c.findFirst({
+		where: { name: categoryName },
+	});
+}
+
+export async function createCategory(categoryName: string): Promise<Category> {
+	const insertedCategory: Category[] = await db
+		.insert(categoryTable)
+		.values({ name: categoryName })
+		.returning();
+
+	return insertedCategory[0];
+}

@@ -73,13 +73,8 @@ export default function TransactionForm({
 	const [categories, setCategories] = useState<Category[]>([]);
 	const [currentCategory, setCurrentCategory] = useState<Category>();
 	const [subCategories, setSubCategories] = useState<SubCategorySchema[]>([]);
-	const [newCategoryDrawer, setNewCategoryDrawer] = useState<boolean>(false);
 	const [dialogStackActiveIndex, setDialogStackActiveIndex] =
 		useState<number>(0);
-	const drawerProp = {
-		openDrawer: newCategoryDrawer,
-		setOpenDrawer: setNewCategoryDrawer,
-	};
 
 	// Fetch categories and subcategories upon component load
 	useEffect(() => {
@@ -347,12 +342,6 @@ export default function TransactionForm({
 									</Button>
 									<Button type="submit" disabled={!isValid || isSubmitting}>
 										{isSubmitting ? "Creating…" : "Create transaction"}
-									</Button>
-									<Button
-										type="button"
-										onClick={() => setNewCategoryDrawer(true)}
-									>
-										Open Sesame
 									</Button>
 								</div>
 							</FieldGroup>
