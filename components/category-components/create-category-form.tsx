@@ -29,7 +29,7 @@ import {
 	IconListTree,
 } from "@tabler/icons-react";
 import { Separator } from "@/components/ui/separator";
-import CreateSubCategory from "@/components/create-subcategory-form";
+import CreateSubCategory from "@/components/category-components/create-subcategory-form";
 import {
 	DrawerContent,
 	DrawerHeader,
@@ -96,7 +96,11 @@ export default function CreateCategoryForm({
 	async function handleCreateNewCategory(newCategory: NewCategory) {
 		setSubmitState("SUBMITTING");
 		try {
-			const createdCategory: Category = await createCategory(newCategory.name);
+			// const createdCategory: Category = await createCategory(newCategory.name);
+			const createdCategory: Category = {
+				id: 15,
+				name: newCategory.name,
+			};
 			setInsertedCategory(createdCategory);
 		} catch {
 			setSubmitState("ERROR");
@@ -200,7 +204,7 @@ export default function CreateCategoryForm({
 					{insertedCategory && createSubCategory && (
 						<>
 							<Separator className="mt-4" />
-							<CreateSubCategory category={insertedCategory} />
+							<CreateSubCategory parentCategory={insertedCategory} />
 						</>
 					)}
 				</div>

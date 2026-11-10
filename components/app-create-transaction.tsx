@@ -29,7 +29,7 @@ import {
 	getAllCategories,
 	getAllSubCategories,
 } from "@/actions/category-actions";
-import CreateCategoryForm from "@/components/create-category-form";
+import CreateCategoryForm from "@/components/category-components/create-category-form";
 import { Drawer } from "@/components/ui/drawer";
 import {
 	Dialog,
