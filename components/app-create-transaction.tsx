@@ -286,21 +286,39 @@ export default function TransactionForm({
 													</SelectContent>
 												</Select>
 												<FieldDescription id="subcategory-description">
-													Choose a subcategory when one is available.
+													{!currentCategory ? (
+														<>Select a category first</>
+													) : (
+														<>Select a subcategory from the list</>
+													)}
 												</FieldDescription>
 											</Field>
 										)}
 									/>
 								</div>
-								<p className="text-xs text-left">
-									<a
-										href="#"
-										className="hover:underline"
-										onClick={() => setOpenDrawer(true)}
-									>
-										Can&apos;t find your category?&nbsp;Create a new one!
-									</a>
-								</p>
+								<div className="grid grid-cols-2 gap-4 sm:grid-cols-2">
+									<p className="text-xs text-left">
+										<a
+											href="#"
+											className="hover:underline"
+											onClick={() => setOpenDrawer(true)}
+										>
+											Can&apos;t find your category?&nbsp;Create a new one!
+										</a>
+									</p>
+									{currentCategory && (
+										<p className="text-xs text-left">
+											<a
+												href="#"
+												className="hover:underline"
+												onClick={() => setOpenDrawer(true)}
+											>
+												Click to create a subcategory under{" "}
+												{currentCategory.name}
+											</a>
+										</p>
+									)}
+								</div>
 								<Field data-invalid={Boolean(errors.amount)}>
 									<FieldLabel htmlFor="amount">Amount</FieldLabel>
 									<InputGroup>
@@ -349,7 +367,8 @@ export default function TransactionForm({
 				onOpenChange={setOpenDrawer}
 				swipeDirection="right"
 			>
-				<CreateCategoryForm />
+				{/* FIXME: Find a better way to handle heading into drawer */}
+				<CreateCategoryForm category={currentCategory ?? undefined} />
 			</Drawer>
 		</>
 	);

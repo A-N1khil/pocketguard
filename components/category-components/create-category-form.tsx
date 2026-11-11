@@ -46,53 +46,62 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-const newCategorySchema = z.object({
-	name: z
-		.string()
-		.trim()
-		.min(3, "Minimum name length should be 3")
-		.superRefine(async (name, ctx) => {
-			if (name.length < 3) return;
-
-			try {
-				const category: Category | undefined = await getCategoryByName(name);
-				if (category) {
-					ctx.addIssue({
-						code: "custom",
-						message: "A category with the same name exists",
-					});
-				}
-			} catch {
-				ctx.addIssue({
-					code: "custom",
-					message: "Unable to check category name. Please try again.",
-				});
-			}
-		}),
-});
-
-type NewCategory = z.infer<typeof newCategorySchema>;
+type NewCategory = {
+	name: string;
+};
 
 type CreateCategoryDrawerProps = {
 	category?: Category;
 };
 
-type SubmitState = "PENDING" | "SUBMITTING" | "DONE" | "ERROR";
+type SubmitState = "PENDING" | "SUBMITTING" | "DONE" | "ERROR" | "INHERITED";
 
 export default function CreateCategoryForm({
 	category,
 }: CreateCategoryDrawerProps) {
-	const [submitState, setSubmitState] = useState<SubmitState>("PENDING");
-	const [insertedCategory, setInsertedCategory] = useState<Category | null>(
-		null,
+	const [submitState, setSubmitState] = useState<SubmitState>(
+		category ? "INHERITED" : "PENDING",
 	);
-	const [createSubCategory, setCreateSubCategory] = useState<boolean>(false);
+	const [insertedCategory, setInsertedCategory] = useState<
+		Category | undefined
+	>(category ?? undefined);
+	const [createSubCategory, setCreateSubCategory] = useState<boolean>(
+		submitState === "INHERITED",
+	);
+
+	// Zod schema
+	const newCategorySchema = z.object({
+		name: z
+			.string()
+			.trim()
+			.min(3, "Minimum name length should be 3")
+			.superRefine(async (name, ctx) => {
+				if (name.length < 3) return;
+
+				if (submitState === "INHERITED") return;
+
+				try {
+					const category: Category | undefined = await getCategoryByName(name);
+					if (category) {
+						ctx.addIssue({
+							code: "custom",
+							message: "A category with the same name exists",
+						});
+					}
+				} catch {
+					ctx.addIssue({
+						code: "custom",
+						message: "Unable to check category name. Please try again.",
+					});
+				}
+			}),
+	});
 
 	const {
 		register,
 		handleSubmit,
 		reset,
-		formState: { errors, isSubmitting, isValid, isValidating },
+		formState: { errors, isSubmitting, isValid, isValidating, isDirty },
 	} = useForm<NewCategory>({
 		resolver: zodResolver(newCategorySchema, undefined, { mode: "async" }),
 		mode: "onChange",
@@ -120,7 +129,7 @@ export default function CreateCategoryForm({
 	function handleFormReset(): void {
 		setSubmitState("PENDING");
 		reset();
-		setInsertedCategory(null);
+		setInsertedCategory(undefined);
 		setCreateSubCategory(false);
 	}
 
@@ -145,6 +154,7 @@ export default function CreateCategoryForm({
 									{...register("name")}
 									aria-invalid={Boolean(errors.name)}
 									aria-busy={isValidating}
+									disabled={isSubmitting || submitState === "INHERITED"}
 								/>
 								<FieldDescription>
 									Name your new category (min 3 characters)
@@ -182,40 +192,55 @@ export default function CreateCategoryForm({
 									)}
 								</ItemContent>
 								<ItemActions>
-									<Button
-										type="submit"
-										disabled={
-											!isValid ||
-											isSubmitting ||
-											isValidating ||
-											submitState === "DONE"
-										}
-									>
-										{isSubmitting ? (
-											<>
-												<Spinner /> Creating...
-											</>
-										) : (
-											"Create Category"
-										)}
-									</Button>
 									<Tooltip>
-										<TooltipTrigger>
-											<Button
-												variant="outline"
-												size="icon"
-												onClick={() => handleFormReset()}
-											>
-												<IconReload />
-											</Button>
-										</TooltipTrigger>
-										<TooltipContent>Reset</TooltipContent>
+										<TooltipTrigger
+											render={
+												<Button
+													type="submit"
+													disabled={
+														!isValid ||
+														isSubmitting ||
+														isValidating ||
+														submitState === "DONE"
+													}
+												>
+													{isSubmitting ? (
+														<>
+															<Spinner /> Creating...
+														</>
+													) : (
+														"Create Category"
+													)}
+												</Button>
+											}
+										/>
+										<TooltipContent>
+											{submitState === "INHERITED"
+												? "Using existing category"
+												: "Create category"}
+										</TooltipContent>
 									</Tooltip>
+									{isDirty && submitState !== "INHERITED" && (
+										<Tooltip>
+											<TooltipTrigger
+												render={
+													<Button
+														variant="outline"
+														size="icon"
+														onClick={() => handleFormReset()}
+													>
+														<IconReload />
+													</Button>
+												}
+											/>
+											<TooltipContent>Reset</TooltipContent>
+										</Tooltip>
+									)}
 								</ItemActions>
 							</Item>
 						</FieldGroup>
 					</form>
-					{insertedCategory && (
+					{insertedCategory && submitState !== "INHERITED" && (
 						<Item
 							size="xs"
 							variant="outline"
