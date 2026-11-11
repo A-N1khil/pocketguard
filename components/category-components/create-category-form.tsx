@@ -27,6 +27,7 @@ import {
 	IconCircleCheck,
 	IconCircleX,
 	IconListTree,
+	IconReload,
 } from "@tabler/icons-react";
 import { Separator } from "@/components/ui/separator";
 import CreateSubCategory from "@/components/category-components/create-subcategory-form";
@@ -39,6 +40,11 @@ import {
 	DrawerClose,
 } from "@/components/ui/drawer";
 import { cn } from "cn";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const newCategorySchema = z.object({
 	name: z
@@ -77,12 +83,15 @@ export default function CreateCategoryForm({
 	category,
 }: CreateCategoryDrawerProps) {
 	const [submitState, setSubmitState] = useState<SubmitState>("PENDING");
-	const [insertedCategory, setInsertedCategory] = useState<Category>();
+	const [insertedCategory, setInsertedCategory] = useState<Category | null>(
+		null,
+	);
 	const [createSubCategory, setCreateSubCategory] = useState<boolean>(false);
 
 	const {
 		register,
 		handleSubmit,
+		reset,
 		formState: { errors, isSubmitting, isValid, isValidating },
 	} = useForm<NewCategory>({
 		resolver: zodResolver(newCategorySchema, undefined, { mode: "async" }),
@@ -102,9 +111,17 @@ export default function CreateCategoryForm({
 				name: newCategory.name,
 			};
 			setInsertedCategory(createdCategory);
+			setSubmitState("DONE");
 		} catch {
 			setSubmitState("ERROR");
 		}
+	}
+
+	function handleFormReset(): void {
+		setSubmitState("PENDING");
+		reset();
+		setInsertedCategory(null);
+		setCreateSubCategory(false);
 	}
 
 	return (
@@ -167,7 +184,12 @@ export default function CreateCategoryForm({
 								<ItemActions>
 									<Button
 										type="submit"
-										disabled={!isValid || isSubmitting || isValidating}
+										disabled={
+											!isValid ||
+											isSubmitting ||
+											isValidating ||
+											submitState === "DONE"
+										}
 									>
 										{isSubmitting ? (
 											<>
@@ -177,6 +199,18 @@ export default function CreateCategoryForm({
 											"Create Category"
 										)}
 									</Button>
+									<Tooltip>
+										<TooltipTrigger>
+											<Button
+												variant="outline"
+												size="icon"
+												onClick={() => handleFormReset()}
+											>
+												<IconReload />
+											</Button>
+										</TooltipTrigger>
+										<TooltipContent>Reset</TooltipContent>
+									</Tooltip>
 								</ItemActions>
 							</Item>
 						</FieldGroup>
