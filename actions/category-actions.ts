@@ -1,0 +1,123 @@
+"use server";
+
+import {
+	Category,
+	CategoryDTO,
+	CategorySchema,
+	SubCategory,
+	SubCategoryDTO,
+	SubCategorySchema,
+} from "@/models/category-model";
+import { db } from "@/index";
+import { categoryTable, subCategoryTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
+
+export async function getCategoryById(
+	id: number,
+): Promise<Category | undefined> {
+	return await db.query.c.findFirst({
+		where: { id: id },
+	});
+}
+
+export async function getCategorySubCategory(
+	categoryId: number,
+): Promise<CategoryDTO | null> {
+	const rawCats: CategorySchema | undefined = await db.query.c.findFirst({
+		where: { id: categoryId },
+		with: { subCategories: true },
+	});
+
+	if (rawCats) {
+		const categoryDTO: CategoryDTO = {
+			categoryId: rawCats.id,
+			categoryName: rawCats.name,
+		};
+		if (rawCats.subCategories) {
+			categoryDTO.subCategories = new Map(
+				rawCats.subCategories.map((subCat) => [
+					subCat.id,
+					subCat as unknown as SubCategoryDTO,
+				]),
+			);
+		}
+		return categoryDTO;
+	}
+
+	return null;
+}
+
+export async function getSubCategoryById(
+	subCategoryId: number,
+	categoryId: number,
+): Promise<SubCategory | null> {
+	const subCatFromDb = await db.query.sc.findFirst({
+		where: { id: subCategoryId, categoryId: categoryId },
+		with: { category: true },
+	});
+
+	if (subCatFromDb) {
+		return {
+			id: subCatFromDb.id,
+			name: subCatFromDb.name,
+			category: subCatFromDb.category.name,
+		} as SubCategory;
+	}
+
+	return null;
+}
+
+export async function getAllCategories(): Promise<Category[]> {
+	return await db.select().from(categoryTable);
+}
+
+export async function getAllSubCategories(): Promise<SubCategorySchema[]> {
+	return await db.select().from(subCategoryTable);
+}
+
+export async function getCategoryByName(
+	categoryName: string,
+): Promise<Category | undefined> {
+	return await db.query.c.findFirst({
+		where: { name: categoryName },
+	});
+}
+
+export async function getSubCategoryByName(
+	category: Category,
+	subcategoryName: string,
+): Promise<SubCategorySchema | undefined> {
+	return await db.query.sc.findFirst({
+		where: { name: subcategoryName, categoryId: category.id },
+	});
+}
+
+export async function createCategory(categoryName: string): Promise<Category> {
+	const insertedCategory: Category[] = await db
+		.insert(categoryTable)
+		.values({ name: categoryName })
+		.returning();
+
+	return insertedCategory[0];
+}
+
+export async function createSubCategory(
+	category: Category,
+	subCategoryName: string,
+): Promise<SubCategorySchema> {
+	const insertedSubCategory: SubCategorySchema[] = await db
+		.insert(subCategoryTable)
+		.values({ categoryId: category.id, name: subCategoryName })
+		.returning();
+
+	return insertedSubCategory[0];
+}
+
+export async function getAllSubCategoriesForCategory(
+	categoryId: number,
+): Promise<SubCategorySchema[]> {
+	return await db
+		.select()
+		.from(subCategoryTable)
+		.where(eq(subCategoryTable.categoryId, categoryId));
+}
