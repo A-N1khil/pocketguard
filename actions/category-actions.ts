@@ -10,6 +10,7 @@ import {
 } from "@/models/category-model";
 import { db } from "@/index";
 import { categoryTable, subCategoryTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 export async function getCategoryById(
 	id: number,
@@ -110,4 +111,13 @@ export async function createSubCategory(
 		.returning();
 
 	return insertedSubCategory[0];
+}
+
+export async function getAllSubCategoriesForCategory(
+	categoryId: number,
+): Promise<SubCategorySchema[]> {
+	return await db
+		.select()
+		.from(subCategoryTable)
+		.where(eq(subCategoryTable.categoryId, categoryId));
 }

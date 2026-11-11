@@ -26,6 +26,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Marker, MarkerIcon, MarkerContent } from "@/components/ui/marker";
 import CategoryTree from "@/components/category-components/category-tree";
+import { cn } from "cn";
 
 const newSubCategorySchema = z.object({
 	name: z.string().trim().min(3, "Name should be at least 3 characters long"),
@@ -238,7 +239,7 @@ export default function CreateSubCategory({
 					</>
 				)}
 			</form>
-			<Marker variant="separator">
+			<Marker variant="separator" className={cn("mt-4")}>
 				<MarkerIcon>
 					<IconListTree />
 				</MarkerIcon>
