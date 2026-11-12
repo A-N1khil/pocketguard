@@ -63,6 +63,9 @@ type TransactionFormProps = {
 	};
 };
 
+type CreateCategoryDrawerState =
+	{ mode: "Category" } | { mode: "SubCategory"; category: Category };
+
 export default function TransactionForm({
 	transaction,
 	dialog,
@@ -71,7 +74,8 @@ export default function TransactionForm({
 	const [categories, setCategories] = useState<Category[]>([]);
 	const [currentCategory, setCurrentCategory] = useState<Category>();
 	const [subCategories, setSubCategories] = useState<SubCategorySchema[]>([]);
-	const [openDrawer, setOpenDrawer] = useState<boolean>(false);
+	const [drawerState, setDrawerState] =
+		useState<CreateCategoryDrawerState | null>(null);
 
 	// Fetch categories and subcategories upon component load
 	useEffect(() => {
@@ -96,6 +100,7 @@ export default function TransactionForm({
 		register,
 		handleSubmit,
 		setValue,
+		getValues,
 		formState: { errors, isSubmitting, isValid },
 	} = useForm<TransactionFormValues>({
 		resolver: zodResolver(newTransactionSchema),
@@ -110,7 +115,21 @@ export default function TransactionForm({
 	});
 
 	async function handleTransactionSubmit() {
-		// do something
+		// TODO: Add business logic
+	}
+
+	function handleDrawerOpen(fromSubCategory: boolean = false): void {
+		if (fromSubCategory) {
+			// Handler check, to stop TS warning
+			if (!currentCategory) return;
+
+			setDrawerState({
+				mode: "SubCategory",
+				category: currentCategory,
+			});
+		} else {
+			setDrawerState({ mode: "Category" });
+		}
 	}
 
 	return (
@@ -301,7 +320,7 @@ export default function TransactionForm({
 										<a
 											href="#"
 											className="hover:underline"
-											onClick={() => setOpenDrawer(true)}
+											onClick={() => handleDrawerOpen()}
 										>
 											Can&apos;t find your category?&nbsp;Create a new one!
 										</a>
@@ -311,7 +330,7 @@ export default function TransactionForm({
 											<a
 												href="#"
 												className="hover:underline"
-												onClick={() => setOpenDrawer(true)}
+												onClick={() => handleDrawerOpen(true)}
 											>
 												Click to create a subcategory under{" "}
 												{currentCategory.name}
@@ -363,12 +382,23 @@ export default function TransactionForm({
 				</Dialog>
 			</div>
 			<Drawer
-				open={openDrawer}
-				onOpenChange={setOpenDrawer}
+				open={drawerState !== null}
+				onOpenChange={(open: boolean): void => {
+					if (!open) {
+						setDrawerState(null);
+					}
+				}}
 				swipeDirection="right"
 			>
-				{/* FIXME: Find a better way to handle heading into drawer */}
-				<CreateCategoryForm category={currentCategory ?? undefined} />
+				{drawerState && (
+					<CreateCategoryForm
+						category={
+							drawerState && drawerState.mode === "SubCategory"
+								? drawerState.category
+								: undefined
+						}
+					/>
+				)}
 			</Drawer>
 		</>
 	);
