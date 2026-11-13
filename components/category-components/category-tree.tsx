@@ -12,37 +12,19 @@ import {
 import { IconBadges, IconChevronRight } from "@tabler/icons-react";
 import { cn } from "cn";
 import CometBorder from "@/components/ui/comet-border";
-import { useEffect, useState } from "react";
-import { getAllSubCategoriesForCategory } from "@/actions/category-actions";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 type CategoryTreeProps = {
 	category: Category;
 	subCategories?: SubCategorySchema[];
+	hasNewSubCategory?: boolean;
 };
 
 export default function CategoryTree({
 	category,
 	subCategories,
+	hasNewSubCategory = false,
 }: CategoryTreeProps) {
-	const [treeSubCategories, setTreeSubCategories] = useState<
-		SubCategorySchema[]
-	>(subCategories || []);
-
-	useEffect(() => {
-		const refreshSubCategories = async () => {
-			const existingSubcategories: SubCategorySchema[] =
-				await getAllSubCategoriesForCategory(category.id);
-
-			setTreeSubCategories((prev: SubCategorySchema[]) => [
-				...prev,
-				...existingSubcategories,
-			]);
-		};
-
-		void refreshSubCategories();
-	}, [category.id]);
-
 	return (
 		<>
 			<ScrollArea className={cn("h-64 w-full rounded-md")}>
@@ -54,24 +36,7 @@ export default function CategoryTree({
 								<TreeIcon hasChildren icon={<IconBadges />} />
 								<TreeLabel>{category.name}</TreeLabel>
 							</TreeNodeTrigger>
-
 							<TreeNodeContent hasChildren>
-								{treeSubCategories.map((subCategory: SubCategorySchema) => {
-									return (
-										<TreeNode
-											level={1}
-											key={subCategory.name}
-											nodeId={subCategory.name}
-											className={cn("relative rounded-md")}
-										>
-											<TreeNodeTrigger>
-												<TreeExpander />
-												<TreeIcon icon={<IconChevronRight />} />
-												<TreeLabel>{subCategory.name}</TreeLabel>
-											</TreeNodeTrigger>
-										</TreeNode>
-									);
-								})}
 								{subCategories &&
 									subCategories.map(
 										(subCategory: SubCategorySchema, index: number) => {
@@ -82,9 +47,8 @@ export default function CategoryTree({
 													nodeId={subCategory.name}
 													className={cn("relative rounded-md")}
 												>
-													{index === treeSubCategories.length && (
-														<CometBorder />
-													)}
+													{index === subCategories.length - 1 &&
+														hasNewSubCategory && <CometBorder />}
 													<TreeNodeTrigger>
 														<TreeExpander />
 														<TreeIcon icon={<IconChevronRight />} />

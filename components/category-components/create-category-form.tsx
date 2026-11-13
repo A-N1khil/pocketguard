@@ -117,11 +117,7 @@ export default function CreateCategoryForm({
 	async function handleCreateNewCategory(newCategory: NewCategory) {
 		setSubmitState("SUBMITTING");
 		try {
-			// const createdCategory: Category = await createCategory(newCategory.name);
-			const createdCategory: Category = {
-				id: 15,
-				name: newCategory.name,
-			};
+			const createdCategory: Category = await createCategory(newCategory.name);
 			setInsertedCategory(createdCategory);
 			setSubmitState("DONE");
 		} catch {

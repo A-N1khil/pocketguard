@@ -5,7 +5,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
 	createSubCategory,
-	getSubCategoryByName,
+	getAllSubCategoriesForCategory,
 } from "@/actions/category-actions";
 import {
 	Field,
@@ -17,13 +17,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { Item, ItemContent, ItemTitle } from "@/components/ui/item";
+import {
+	Item,
+	ItemActions,
+	ItemContent,
+	ItemTitle,
+} from "@/components/ui/item";
 import {
 	IconCircleCheck,
 	IconCircleX,
 	IconListTree,
 } from "@tabler/icons-react";
-import { Separator } from "@/components/ui/separator";
 import { Marker, MarkerIcon, MarkerContent } from "@/components/ui/marker";
 import CategoryTree from "@/components/category-components/category-tree";
 import { cn } from "cn";
@@ -47,8 +51,23 @@ export default function CreateSubCategory({
 	const [insertedSubCategory, setInsertedSubCategory] =
 		useState<SubCategorySchema>();
 	const [treeSubcategories, setTreeSubcategories] = useState<
-		SubCategorySchema[]
-	>([]);
+		SubCategorySchema[] | null
+	>(null);
+
+	// Flag to set when a new subcategory has been inserted
+	const [hasNewSubCategory, setHasNewSubCategory] = useState<boolean>(false);
+
+	useEffect(() => {
+		const populateSubCategories = async () => {
+			const subCatsFromDB: SubCategorySchema[] =
+				await getAllSubCategoriesForCategory(parentCategory.id);
+
+			// Subcategory is set
+			setTreeSubcategories((): SubCategorySchema[] => [...subCatsFromDB]);
+		};
+
+		void populateSubCategories();
+	}, [parentCategory]);
 
 	const {
 		register,
@@ -74,19 +93,17 @@ export default function CreateSubCategory({
 
 	const [uniquenessCheck, setUniquenessCheck] = useState<{
 		name: string;
-		category: Category;
-		status: "checking" | "unique" | "duplicate" | "error";
+		status: "checking" | "unique" | "duplicate" | "error" | "random";
 	}>();
-	const isCurrentCheck =
-		uniquenessCheck?.name === name &&
-		uniquenessCheck?.category === parentCategory;
+	const isCurrentCheck = uniquenessCheck?.name === name;
 	const isChecking = isCurrentCheck && uniquenessCheck?.status === "checking";
 	const isUnique = isCurrentCheck && uniquenessCheck?.status === "unique";
+	const isSaved = submitState === "DONE";
 
 	useEffect(() => {
 		const value = name.trim();
 
-		if (value.length < 3) {
+		if (isSaved || value.length < 3 || !treeSubcategories) {
 			return;
 		}
 
@@ -95,33 +112,31 @@ export default function CreateSubCategory({
 		const timer = setTimeout(async () => {
 			setUniquenessCheck({
 				name,
-				category: parentCategory,
 				status: "checking",
 			});
 
 			try {
-				const subcategory: SubCategorySchema | undefined =
-					await getSubCategoryByName(parentCategory, value);
+				const isSubCategoryPresent = treeSubcategories.find(
+					(subCategory: SubCategorySchema) => subCategory.name === value,
+				);
 
 				if (cancelled || getValues("name") !== name) {
 					return;
 				}
 
-				if (subcategory) {
+				if (isSubCategoryPresent) {
 					setError("name", {
 						type: "manual",
 						message: "Subcategory name already exists",
 					});
 					setUniquenessCheck({
 						name,
-						category: parentCategory,
 						status: "duplicate",
 					});
 				} else {
 					clearErrors("name");
 					setUniquenessCheck({
 						name,
-						category: parentCategory,
 						status: "unique",
 					});
 				}
@@ -133,7 +148,6 @@ export default function CreateSubCategory({
 					});
 					setUniquenessCheck({
 						name,
-						category: parentCategory,
 						status: "error",
 					});
 				}
@@ -144,31 +158,25 @@ export default function CreateSubCategory({
 			cancelled = true;
 			clearTimeout(timer);
 		};
-	}, [name, parentCategory, setError, clearErrors, getValues]);
-
-	const [counter, setCounter] = useState<number>(10);
+	}, [name, setError, clearErrors, getValues, treeSubcategories, isSaved]);
 
 	async function handleCreateNewSubCategory(newSubCategory: NewSubCategory) {
-		if (!isUnique || isChecking) return;
+		if (isSaved || !isUnique || isChecking) return;
 
 		setSubmitState("SUBMITTING");
 		try {
-			// const createdSubCategory: SubCategorySchema = await createSubCategory(
-			// 	parentCategory,
-			// 	newSubCategory.name,
-			// );
-			const createdSubCategory: SubCategorySchema = {
-				id: counter,
-				name: newSubCategory.name,
-				categoryId: parentCategory.id,
-			};
-			setCounter((counter) => counter + 1);
+			const createdSubCategory: SubCategorySchema = await createSubCategory(
+				parentCategory,
+				newSubCategory.name,
+			);
 			setInsertedSubCategory(createdSubCategory);
+			setUniquenessCheck(undefined);
 			setSubmitState("DONE");
 			setTreeSubcategories((currentTree) => [
-				...currentTree,
+				...(currentTree || []),
 				createdSubCategory,
 			]);
+			setHasNewSubCategory(true);
 		} catch {
 			setSubmitState("ERROR");
 		}
@@ -187,7 +195,11 @@ export default function CreateSubCategory({
 							id="subcategory-name"
 							type="text"
 							placeholder="Reason to spend.."
-							{...register("name")}
+							{...register("name", {
+								onChange: () => {
+									if (isSaved) setSubmitState("PENDING");
+								},
+							})}
 							aria-invalid={Boolean(errors.name)}
 							aria-busy={isChecking}
 							disabled={isSubmitting}
@@ -198,46 +210,49 @@ export default function CreateSubCategory({
 						<FieldError errors={[errors.name]} />
 						{isChecking && <p role="status">Checking subcategory name…</p>}
 					</Field>
-					<div className="flex justify-end gap-2">
-						<Button
-							type="submit"
-							disabled={!isValid || !isUnique || isSubmitting || isChecking}
-						>
-							{isSubmitting ? (
+					<Item className={"p-0"}>
+						<ItemContent>
+							{["DONE", "ERROR"].includes(submitState) && (
 								<>
-									<Spinner /> Creating...
+									<ItemTitle
+										className={cn(
+											submitState === "DONE"
+												? "text-green-600"
+												: "text-red-400",
+											"text-xs",
+										)}
+									>
+										{submitState === "DONE" ? (
+											<>
+												<IconCircleCheck /> Created: {insertedSubCategory?.name}
+											</>
+										) : (
+											<>
+												<IconCircleX /> Failed to create subcategory
+											</>
+										)}
+									</ItemTitle>
 								</>
-							) : (
-								"Create Subcategory"
 							)}
-						</Button>
-					</div>
+						</ItemContent>
+						<ItemActions>
+							<Button
+								type="submit"
+							disabled={
+								isSaved || !isValid || !isUnique || isSubmitting || isChecking
+							}
+							>
+								{isSubmitting ? (
+									<>
+										<Spinner /> Creating...
+									</>
+								) : (
+									"Create Subcategory"
+								)}
+							</Button>
+						</ItemActions>
+					</Item>
 				</FieldGroup>
-				{["DONE", "ERROR"].includes(submitState) && (
-					<>
-						<Separator className="mt-4" />
-						<Item className="p-0 mt-4" role="status">
-							<ItemContent>
-								<ItemTitle
-									className={
-										submitState === "DONE" ? "text-green-600" : "text-red-400"
-									}
-								>
-									{submitState === "DONE" ? (
-										<>
-											<IconCircleCheck /> Created subcategory:{" "}
-											{insertedSubCategory?.name}
-										</>
-									) : (
-										<>
-											<IconCircleX /> Failed to create subcategory
-										</>
-									)}
-								</ItemTitle>
-							</ItemContent>
-						</Item>
-					</>
-				)}
 			</form>
 			<Marker variant="separator" className={cn("mt-4")}>
 				<MarkerIcon>
@@ -247,7 +262,10 @@ export default function CreateSubCategory({
 			</Marker>
 			<CategoryTree
 				category={parentCategory}
-				subCategories={treeSubcategories}
+				subCategories={
+					treeSubcategories !== null ? treeSubcategories : undefined
+				}
+				hasNewSubCategory={hasNewSubCategory}
 			/>
 		</div>
 	);
