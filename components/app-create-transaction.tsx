@@ -24,7 +24,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Category, SubCategorySchema } from "@/models/category-model";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
 	getAllCategories,
 	getAllSubCategories,
@@ -41,8 +41,8 @@ import {
 
 const newTransactionSchema = z.object({
 	title: z.string().trim().min(5, "Title must be at least 5 characters"),
-	categoryId: z.string().nullable(),
-	subCategoryId: z.string().nullable(),
+	categoryId: z.number().nullable(),
+	subCategoryId: z.number().nullable(),
 	transactionType: z.enum(["CREDIT", "DEBIT"], "Select CREDIT or DEBIT"),
 	amount: z
 		.number({ error: "Enter a valid amount" })
@@ -77,18 +77,19 @@ export default function TransactionForm({
 	const [drawerState, setDrawerState] =
 		useState<CreateCategoryDrawerState | null>(null);
 
+	const refreshCategories = useCallback(async () => {
+		return Promise.all([getAllCategories(), getAllSubCategories()]).then(
+			([newCategories, newSubCategories]) => {
+				setCategories(newCategories);
+				setSubCategories(newSubCategories);
+			},
+		);
+	}, []);
+
 	// Fetch categories and subcategories upon component load
 	useEffect(() => {
-		const fetchCategories = async () => {
-			setCategories(await getAllCategories());
-		};
-		const fetchSubcategories = async () => {
-			setSubCategories(await getAllSubCategories());
-		};
-
-		void fetchCategories();
-		void fetchSubcategories();
-	}, []);
+		void refreshCategories().catch(console.error);
+	}, [refreshCategories]);
 
 	// Change subcategory options with category select
 	const currentSubCategories = subCategories.filter(
@@ -100,7 +101,6 @@ export default function TransactionForm({
 		register,
 		handleSubmit,
 		setValue,
-		getValues,
 		formState: { errors, isSubmitting, isValid },
 	} = useForm<TransactionFormValues>({
 		resolver: zodResolver(newTransactionSchema),
@@ -114,8 +114,9 @@ export default function TransactionForm({
 		},
 	});
 
-	async function handleTransactionSubmit() {
+	async function handleTransactionSubmit(transaction: TransactionFormValues) {
 		// TODO: Add business logic
+		console.log(transaction);
 	}
 
 	function handleDrawerOpen(fromSubCategory: boolean = false): void {
@@ -130,6 +131,33 @@ export default function TransactionForm({
 		} else {
 			setDrawerState({ mode: "Category" });
 		}
+	}
+
+	const isCategoryUpdated = useRef<boolean>(false);
+
+	function handleDrawerOpenChange(open: boolean): void {
+		// do nothing if open
+		if (open) {
+			return;
+		}
+
+		setDrawerState(null);
+
+		// check if categories has changed by the drawer
+		if (isCategoryUpdated.current) {
+			// Mark as acknowledged
+			isCategoryUpdated.current = true;
+
+			void refreshCategories().catch((error) => {
+				// revert ack to try again
+				isCategoryUpdated.current = true;
+				console.error(error);
+			});
+		}
+	}
+
+	function handleCategoryUpdate(): void {
+		isCategoryUpdated.current = true;
 	}
 
 	return (
@@ -383,11 +411,7 @@ export default function TransactionForm({
 			</div>
 			<Drawer
 				open={drawerState !== null}
-				onOpenChange={(open: boolean): void => {
-					if (!open) {
-						setDrawerState(null);
-					}
-				}}
+				onOpenChange={handleDrawerOpenChange}
 				swipeDirection="right"
 			>
 				{drawerState && (
@@ -397,6 +421,7 @@ export default function TransactionForm({
 								? drawerState.category
 								: undefined
 						}
+						handleCategoryUpdate={handleCategoryUpdate}
 					/>
 				)}
 			</Drawer>

@@ -51,12 +51,14 @@ type NewCategory = {
 };
 
 type CreateCategoryDrawerProps = {
+	handleCategoryUpdate: () => void;
 	category?: Category;
 };
 
 type SubmitState = "PENDING" | "SUBMITTING" | "DONE" | "ERROR" | "INHERITED";
 
 export default function CreateCategoryForm({
+	handleCategoryUpdate,
 	category,
 }: CreateCategoryDrawerProps) {
 	if (category) {
@@ -122,6 +124,8 @@ export default function CreateCategoryForm({
 			setSubmitState("DONE");
 		} catch {
 			setSubmitState("ERROR");
+		} finally {
+			handleCategoryUpdate();
 		}
 	}
 
@@ -262,7 +266,10 @@ export default function CreateCategoryForm({
 					{insertedCategory && createSubCategory && (
 						<>
 							<Separator className="mt-4" />
-							<CreateSubCategory parentCategory={insertedCategory} />
+							<CreateSubCategory
+								parentCategory={insertedCategory}
+								handleCategoryUpdate={handleCategoryUpdate}
+							/>
 						</>
 					)}
 				</div>

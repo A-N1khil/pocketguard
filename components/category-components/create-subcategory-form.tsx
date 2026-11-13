@@ -40,12 +40,14 @@ type NewSubCategory = z.infer<typeof newSubCategorySchema>;
 
 type NewSubCategoryProps = {
 	parentCategory: Category;
+	handleCategoryUpdate: () => void;
 };
 
 type SubmitState = "PENDING" | "SUBMITTING" | "DONE" | "ERROR";
 
 export default function CreateSubCategory({
 	parentCategory,
+	handleCategoryUpdate,
 }: NewSubCategoryProps) {
 	const [submitState, setSubmitState] = useState<SubmitState>("PENDING");
 	const [insertedSubCategory, setInsertedSubCategory] =
@@ -179,6 +181,8 @@ export default function CreateSubCategory({
 			setHasNewSubCategory(true);
 		} catch {
 			setSubmitState("ERROR");
+		} finally {
+			handleCategoryUpdate();
 		}
 	}
 
@@ -238,9 +242,9 @@ export default function CreateSubCategory({
 						<ItemActions>
 							<Button
 								type="submit"
-							disabled={
-								isSaved || !isValid || !isUnique || isSubmitting || isChecking
-							}
+								disabled={
+									isSaved || !isValid || !isUnique || isSubmitting || isChecking
+								}
 							>
 								{isSubmitting ? (
 									<>
