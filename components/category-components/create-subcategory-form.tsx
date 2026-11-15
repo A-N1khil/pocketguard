@@ -31,6 +31,7 @@ import {
 import { Marker, MarkerIcon, MarkerContent } from "@/components/ui/marker";
 import CategoryTree from "@/components/category-components/category-tree";
 import { cn } from "cn";
+import { SubmitState } from "@/lib/utils";
 
 const newSubCategorySchema = z.object({
 	name: z.string().trim().min(3, "Name should be at least 3 characters long"),
@@ -42,8 +43,6 @@ type NewSubCategoryProps = {
 	parentCategory: Category;
 	handleCategoryUpdate: () => void;
 };
-
-type SubmitState = "PENDING" | "SUBMITTING" | "DONE" | "ERROR";
 
 export default function CreateSubCategory({
 	parentCategory,

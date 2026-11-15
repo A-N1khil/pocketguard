@@ -45,6 +45,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { SubmitState } from "@/lib/utils";
 
 type NewCategory = {
 	name: string;
@@ -55,7 +56,7 @@ type CreateCategoryDrawerProps = {
 	category?: Category;
 };
 
-type SubmitState = "PENDING" | "SUBMITTING" | "DONE" | "ERROR" | "INHERITED";
+type CategorySubmitState = SubmitState | "INHERITED";
 
 export default function CreateCategoryForm({
 	handleCategoryUpdate,
@@ -64,7 +65,7 @@ export default function CreateCategoryForm({
 	if (category) {
 		console.log("found category", category);
 	}
-	const [submitState, setSubmitState] = useState<SubmitState>(
+	const [submitState, setSubmitState] = useState<CategorySubmitState>(
 		category ? "INHERITED" : "PENDING",
 	);
 	const [insertedCategory, setInsertedCategory] = useState<
