@@ -6,15 +6,11 @@ export interface Category {
 export interface SubCategory {
 	id: number;
 	name: string;
-	category: string;
+	categoryId: number;
 }
 
 export interface CategorySchema extends Category {
-	subCategories?: SubCategorySchema[];
-}
-
-export interface SubCategorySchema extends Omit<SubCategory, "category"> {
-	categoryId: number;
+	subCategories?: SubCategory[];
 }
 
 export interface SubCategoryDTO {

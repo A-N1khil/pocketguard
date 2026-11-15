@@ -1,4 +1,4 @@
-import { Category, SubCategorySchema } from "@/models/category-model";
+import { Category, SubCategory } from "@/models/category-model";
 import {
 	TreeExpander,
 	TreeIcon,
@@ -16,7 +16,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 type CategoryTreeProps = {
 	category: Category;
-	subCategories?: SubCategorySchema[];
+	subCategories?: SubCategory[];
 	hasNewSubCategory?: boolean;
 };
 
@@ -39,7 +39,7 @@ export default function CategoryTree({
 							<TreeNodeContent hasChildren>
 								{subCategories &&
 									subCategories.map(
-										(subCategory: SubCategorySchema, index: number) => {
+										(subCategory: SubCategory, index: number) => {
 											return (
 												<TreeNode
 													level={1}

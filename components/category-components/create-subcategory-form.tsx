@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { z } from "zod";
-import { Category, SubCategorySchema } from "@/models/category-model";
+import { Category, SubCategory } from "@/models/category-model";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -50,10 +50,9 @@ export default function CreateSubCategory({
 	handleCategoryUpdate,
 }: NewSubCategoryProps) {
 	const [submitState, setSubmitState] = useState<SubmitState>("PENDING");
-	const [insertedSubCategory, setInsertedSubCategory] =
-		useState<SubCategorySchema>();
+	const [insertedSubCategory, setInsertedSubCategory] = useState<SubCategory>();
 	const [treeSubcategories, setTreeSubcategories] = useState<
-		SubCategorySchema[] | null
+		SubCategory[] | null
 	>(null);
 
 	// Flag to set when a new subcategory has been inserted
@@ -61,11 +60,12 @@ export default function CreateSubCategory({
 
 	useEffect(() => {
 		const populateSubCategories = async () => {
-			const subCatsFromDB: SubCategorySchema[] =
-				await getAllSubCategoriesForCategory(parentCategory.id);
+			const subCatsFromDB: SubCategory[] = await getAllSubCategoriesForCategory(
+				parentCategory.id,
+			);
 
 			// Subcategory is set
-			setTreeSubcategories((): SubCategorySchema[] => [...subCatsFromDB]);
+			setTreeSubcategories((): SubCategory[] => [...subCatsFromDB]);
 		};
 
 		void populateSubCategories();
@@ -119,7 +119,7 @@ export default function CreateSubCategory({
 
 			try {
 				const isSubCategoryPresent = treeSubcategories.find(
-					(subCategory: SubCategorySchema) => subCategory.name === value,
+					(subCategory: SubCategory) => subCategory.name === value,
 				);
 
 				if (cancelled || getValues("name") !== name) {
@@ -167,7 +167,7 @@ export default function CreateSubCategory({
 
 		setSubmitState("SUBMITTING");
 		try {
-			const createdSubCategory: SubCategorySchema = await createSubCategory(
+			const createdSubCategory: SubCategory = await createSubCategory(
 				parentCategory,
 				newSubCategory.name,
 			);

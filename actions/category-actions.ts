@@ -6,7 +6,6 @@ import {
 	CategorySchema,
 	SubCategory,
 	SubCategoryDTO,
-	SubCategorySchema,
 } from "@/models/category-model";
 import { db } from "@/index";
 import { categoryTable, subCategoryTable } from "@/db/schema";
@@ -60,7 +59,7 @@ export async function getSubCategoryById(
 		return {
 			id: subCatFromDb.id,
 			name: subCatFromDb.name,
-			category: subCatFromDb.category.name,
+			categoryId: subCatFromDb.category.id,
 		} as SubCategory;
 	}
 
@@ -71,7 +70,7 @@ export async function getAllCategories(): Promise<Category[]> {
 	return await db.select().from(categoryTable);
 }
 
-export async function getAllSubCategories(): Promise<SubCategorySchema[]> {
+export async function getAllSubCategories(): Promise<SubCategory[]> {
 	return await db.select().from(subCategoryTable);
 }
 
@@ -86,7 +85,7 @@ export async function getCategoryByName(
 export async function getSubCategoryByName(
 	category: Category,
 	subcategoryName: string,
-): Promise<SubCategorySchema | undefined> {
+): Promise<SubCategory | undefined> {
 	return await db.query.sc.findFirst({
 		where: { name: subcategoryName, categoryId: category.id },
 	});
@@ -104,8 +103,8 @@ export async function createCategory(categoryName: string): Promise<Category> {
 export async function createSubCategory(
 	category: Category,
 	subCategoryName: string,
-): Promise<SubCategorySchema> {
-	const insertedSubCategory: SubCategorySchema[] = await db
+): Promise<SubCategory> {
+	const insertedSubCategory: SubCategory[] = await db
 		.insert(subCategoryTable)
 		.values({ categoryId: category.id, name: subCategoryName })
 		.returning();
@@ -115,7 +114,7 @@ export async function createSubCategory(
 
 export async function getAllSubCategoriesForCategory(
 	categoryId: number,
-): Promise<SubCategorySchema[]> {
+): Promise<SubCategory[]> {
 	return await db
 		.select()
 		.from(subCategoryTable)
