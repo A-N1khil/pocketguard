@@ -1,9 +1,6 @@
 import { Category, SubCategory } from "@/models/category-model";
 
-export enum TransactionType {
-	CREDIT = "CREDIT",
-	DEBIT = "DEBIT",
-}
+export type TransactionType = "CREDIT" | "DEBIT";
 
 export interface Transaction {
 	id: number;
@@ -12,7 +9,7 @@ export interface Transaction {
 	category: Category;
 	subCategory: SubCategory;
 	amount: number;
-	timestamp: Date;
+	timestamp: string;
 }
 
 export interface TransactionSchema {
@@ -20,7 +17,16 @@ export interface TransactionSchema {
 	title: string;
 	transactionType: "CREDIT" | "DEBIT";
 	amount: number;
-	timestamp: Date | null;
+	timestamp: string;
+	categoryId: number;
+	subCategoryId: number;
+}
+
+export interface CreateTransaction {
+	title: string;
+	transactionType: TransactionType;
+	amount: number;
+	timestamp: string;
 	categoryId: number;
 	subCategoryId: number;
 }

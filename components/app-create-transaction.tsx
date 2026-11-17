@@ -23,7 +23,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Category, SubCategorySchema } from "@/models/category-model";
+import { Category, SubCategory } from "@/models/category-model";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
 	getAllCategories,
@@ -38,11 +38,21 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import {
+	CreateTransaction,
+	Transaction,
+	TransactionType,
+} from "@/models/transaction-model";
+import dayjs from "dayjs";
+import { insertTransaction } from "@/actions/transaction-actions";
+import { cn, SubmitState } from "@/lib/utils";
+import { Spinner } from "@/components/ui/spinner";
+import { IconCircleCheck, IconCircleX } from "@tabler/icons-react";
 
 const newTransactionSchema = z.object({
 	title: z.string().trim().min(5, "Title must be at least 5 characters"),
-	categoryId: z.number().nullable(),
-	subCategoryId: z.number().nullable(),
+	categoryId: z.number().positive("Select a category"),
+	subCategoryId: z.number().positive("Select a subcategory"),
 	transactionType: z.enum(["CREDIT", "DEBIT"], "Select CREDIT or DEBIT"),
 	amount: z
 		.number({ error: "Enter a valid amount" })
@@ -52,30 +62,30 @@ const newTransactionSchema = z.object({
 type TransactionFormValues = z.infer<typeof newTransactionSchema>;
 
 type TransactionFormProps = {
-	transaction: {
-		title?: string;
-		transactionType?: "CREDIT" | "DEBIT";
-		amount?: number;
-	};
 	dialog: {
 		openDialog: boolean;
 		setOpenDialog: (open: boolean) => void;
 	};
+	transaction?: Transaction;
 };
 
 type CreateCategoryDrawerState =
 	{ mode: "Category" } | { mode: "SubCategory"; category: Category };
 
 export default function TransactionForm({
-	transaction,
 	dialog,
+	transaction,
 }: TransactionFormProps) {
 	const { openDialog, setOpenDialog } = dialog;
 	const [categories, setCategories] = useState<Category[]>([]);
 	const [currentCategory, setCurrentCategory] = useState<Category>();
-	const [subCategories, setSubCategories] = useState<SubCategorySchema[]>([]);
+	const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
 	const [drawerState, setDrawerState] =
 		useState<CreateCategoryDrawerState | null>(null);
+	const [submitState, setSubmitState] = useState<SubmitState>("PENDING");
+	const [insertedTransaction, setInsertedTransaction] = useState<
+		Transaction | undefined
+	>(undefined);
 
 	const refreshCategories = useCallback(async () => {
 		return Promise.all([getAllCategories(), getAllSubCategories()]).then(
@@ -92,8 +102,8 @@ export default function TransactionForm({
 	}, [refreshCategories]);
 
 	// Change subcategory options with category select
-	const currentSubCategories = subCategories.filter(
-		(subCat) => subCat.categoryId === currentCategory?.id,
+	const currentSubCategories: SubCategory[] = subCategories.filter(
+		(subCat: SubCategory) => subCat.categoryId === currentCategory?.id,
 	);
 
 	const {
@@ -106,17 +116,37 @@ export default function TransactionForm({
 		resolver: zodResolver(newTransactionSchema),
 		mode: "onChange",
 		defaultValues: {
-			categoryId: null,
-			subCategoryId: null,
-			title: transaction.title || "",
-			transactionType: transaction.transactionType || "DEBIT",
-			amount: transaction.amount || 0,
+			categoryId: transaction?.category.id ?? -1,
+			subCategoryId: transaction?.subCategory.id ?? -1,
+			title: transaction?.title ?? "",
+			transactionType: transaction?.transactionType ?? "DEBIT",
+			amount: transaction?.amount ?? 0,
 		},
 	});
 
-	async function handleTransactionSubmit(transaction: TransactionFormValues) {
-		// TODO: Add business logic
-		console.log(transaction);
+	async function handleTransactionSubmit(
+		formTransaction: TransactionFormValues,
+	) {
+		if (!formTransaction.categoryId || !formTransaction.subCategoryId) {
+			return;
+		}
+
+		setSubmitState("SUBMITTING");
+
+		const createTransaction: CreateTransaction = {
+			...formTransaction,
+			timestamp: dayjs().toISOString(),
+			transactionType: formTransaction.transactionType as TransactionType,
+		};
+		try {
+			setInsertedTransaction(await insertTransaction(createTransaction));
+			if (insertedTransaction) {
+				setSubmitState("DONE");
+			}
+		} catch (error) {
+			console.error(error);
+			setSubmitState("ERROR");
+		}
 	}
 
 	function handleDrawerOpen(fromSubCategory: boolean = false): void {
@@ -160,6 +190,49 @@ export default function TransactionForm({
 		isCategoryUpdated.current = true;
 	}
 
+	function renderSubmitButton() {
+		if (["DONE", "ERROR"].includes(submitState)) {
+			return (
+				<Button
+					type="button"
+					disabled
+					className={cn(
+						submitState === "DONE" ? "bg-success" : "bg-destructive",
+					)}
+				>
+					{submitState === "DONE" ? (
+						<>
+							<IconCircleCheck /> Transaction created
+						</>
+					) : (
+						<>
+							<IconCircleX /> An error occurred
+						</>
+					)}
+				</Button>
+			);
+		} else {
+			return (
+				<Button type="submit" disabled={!isValid || isSubmitting}>
+					{isSubmitting ? (
+						<>
+							<Spinner /> Creating...
+						</>
+					) : (
+						"Create transaction"
+					)}
+				</Button>
+			);
+		}
+	}
+
+	/**
+	 * Resets submit state on form value change
+	 */
+	function resetSubmitState(): void {
+		setSubmitState("PENDING");
+	}
+
 	return (
 		<>
 			<div className="flex">
@@ -167,12 +240,18 @@ export default function TransactionForm({
 					{/* Create transaction dialog */}
 					<DialogContent className="sm:max-w-1/3">
 						<DialogHeader>
-							<DialogTitle>Create transaction</DialogTitle>
+							<DialogTitle>
+								{transaction ? "Create" : "Update"} transaction
+							</DialogTitle>
 							<DialogDescription>
 								Enter the details of your transaction.
 							</DialogDescription>
 						</DialogHeader>
-						<form onSubmit={handleSubmit(handleTransactionSubmit)} noValidate>
+						<form
+							onChange={resetSubmitState}
+							onSubmit={handleSubmit(handleTransactionSubmit)}
+							noValidate
+						>
 							<FieldGroup>
 								<Field data-invalid={Boolean(errors.title)}>
 									<FieldLabel htmlFor="title">Title</FieldLabel>
@@ -237,7 +316,7 @@ export default function TransactionForm({
 												<FieldLabel htmlFor="category">Category</FieldLabel>
 												<Select
 													name={field.name}
-													value={field.value}
+													value={field.value === -1 ? null : field.value}
 													onValueChange={(value) => {
 														field.onChange(value);
 														setCurrentCategory(
@@ -245,10 +324,11 @@ export default function TransactionForm({
 																(category) => category.id === value,
 															),
 														);
-														setValue("subCategoryId", null, {
+														setValue("subCategoryId", -1, {
 															shouldValidate: true,
 															shouldDirty: true,
 														});
+														resetSubmitState();
 													}}
 												>
 													<SelectTrigger
@@ -290,8 +370,11 @@ export default function TransactionForm({
 												</FieldLabel>
 												<Select
 													name={field.name}
-													value={field.value}
-													onValueChange={field.onChange}
+													value={field.value === -1 ? null : field.value}
+													onValueChange={(value) => {
+														field.onChange(value);
+														resetSubmitState();
+													}}
 													disabled={
 														!currentCategory ||
 														currentSubCategories.length === 0
@@ -400,9 +483,7 @@ export default function TransactionForm({
 									>
 										Cancel
 									</Button>
-									<Button type="submit" disabled={!isValid || isSubmitting}>
-										{isSubmitting ? "Creating…" : "Create transaction"}
-									</Button>
+									{renderSubmitButton()}
 								</div>
 							</FieldGroup>
 						</form>

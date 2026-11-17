@@ -65,7 +65,7 @@ export function NavMain({
 					</SidebarMenu>
 				</SidebarGroupContent>
 			</SidebarGroup>
-			<TransactionForm transaction={{}} dialog={dialog} />
+			<TransactionForm dialog={dialog} />
 		</>
 	);
 }
