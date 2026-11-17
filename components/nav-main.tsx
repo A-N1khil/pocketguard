@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/sidebar";
 import { CirclePlusIcon, MailIcon } from "lucide-react";
 import { useState } from "react";
-import TransactionForm from "@/components/app-create-transaction";
+import TransactionForm from "@/components/transaction/create-transaction-form";
 
 export function NavMain({
 	items,

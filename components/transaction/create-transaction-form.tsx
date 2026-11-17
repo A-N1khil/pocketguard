@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
 	InputGroup,
@@ -43,23 +43,32 @@ import {
 	Transaction,
 	TransactionType,
 } from "@/models/transaction-model";
-import dayjs from "dayjs";
+import TransactionFormDateTimePicker from "./TransactionFormDateTimePicker";
 import { insertTransaction } from "@/actions/transaction-actions";
 import { cn, SubmitState } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
-import { IconCircleCheck, IconCircleX } from "@tabler/icons-react";
+import {
+	IconCashBanknote,
+	IconCircleCheck,
+	IconCircleX,
+	IconCurrencyDollar,
+	IconMenu3,
+	IconTag,
+	IconTags,
+} from "@tabler/icons-react";
 
 const newTransactionSchema = z.object({
 	title: z.string().trim().min(5, "Title must be at least 5 characters"),
 	categoryId: z.number().positive("Select a category"),
 	subCategoryId: z.number().positive("Select a subcategory"),
 	transactionType: z.enum(["CREDIT", "DEBIT"], "Select CREDIT or DEBIT"),
+	timestamp: z.iso.datetime(),
 	amount: z
 		.number({ error: "Enter a valid amount" })
 		.positive("Amount should be greater than 0"),
 });
 
-type TransactionFormValues = z.infer<typeof newTransactionSchema>;
+export type TransactionFormValues = z.infer<typeof newTransactionSchema>;
 
 type TransactionFormProps = {
 	dialog: {
@@ -120,9 +129,13 @@ export default function TransactionForm({
 			subCategoryId: transaction?.subCategory.id ?? -1,
 			title: transaction?.title ?? "",
 			transactionType: transaction?.transactionType ?? "DEBIT",
+			timestamp: transaction
+				? new Date(transaction.timestamp).toISOString()
+				: new Date().toISOString(),
 			amount: transaction?.amount ?? 0,
 		},
 	});
+	const timestamp = useWatch({ control, name: "timestamp" });
 
 	async function handleTransactionSubmit(
 		formTransaction: TransactionFormValues,
@@ -135,7 +148,6 @@ export default function TransactionForm({
 
 		const createTransaction: CreateTransaction = {
 			...formTransaction,
-			timestamp: dayjs().toISOString(),
 			transactionType: formTransaction.transactionType as TransactionType,
 		};
 		try {
@@ -254,7 +266,9 @@ export default function TransactionForm({
 						>
 							<FieldGroup>
 								<Field data-invalid={Boolean(errors.title)}>
-									<FieldLabel htmlFor="title">Title</FieldLabel>
+									<FieldLabel htmlFor="title">
+										<IconMenu3 size={18} /> Title
+									</FieldLabel>
 									<Input
 										id="title"
 										type="text"
@@ -274,6 +288,7 @@ export default function TransactionForm({
 									render={({ field, fieldState }) => (
 										<Field data-invalid={fieldState.invalid}>
 											<FieldLabel htmlFor="transactionType">
+												<IconCashBanknote size={18} />
 												Transaction type
 											</FieldLabel>
 											<Select
@@ -307,13 +322,29 @@ export default function TransactionForm({
 										</Field>
 									)}
 								/>
+								<TransactionFormDateTimePicker
+									register={register}
+									timestamp={timestamp}
+									error={errors.timestamp?.message}
+									onTimestampChange={(value) => {
+										setValue("timestamp", value, {
+											shouldDirty: true,
+											shouldTouch: true,
+											shouldValidate: true,
+										});
+										resetSubmitState();
+									}}
+								/>
 								<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 									<Controller
 										name="categoryId"
 										control={control}
 										render={({ field }) => (
 											<Field>
-												<FieldLabel htmlFor="category">Category</FieldLabel>
+												<FieldLabel htmlFor="category">
+													<IconTag size={18} />
+													Category
+												</FieldLabel>
 												<Select
 													name={field.name}
 													value={field.value === -1 ? null : field.value}
@@ -366,6 +397,7 @@ export default function TransactionForm({
 										render={({ field }) => (
 											<Field>
 												<FieldLabel htmlFor="subcategory">
+													<IconTags size={18} />
 													Subcategory
 												</FieldLabel>
 												<Select
@@ -450,7 +482,10 @@ export default function TransactionForm({
 									)}
 								</div>
 								<Field data-invalid={Boolean(errors.amount)}>
-									<FieldLabel htmlFor="amount">Amount</FieldLabel>
+									<FieldLabel htmlFor="amount">
+										<IconCurrencyDollar size={18} />
+										Amount
+									</FieldLabel>
 									<InputGroup>
 										<InputGroupAddon>
 											<InputGroupText>$</InputGroupText>
