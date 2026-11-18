@@ -56,6 +56,7 @@ import {
 	IconTag,
 	IconTags,
 } from "@tabler/icons-react";
+import { toast } from "@/components/ui/toast";
 
 const newTransactionSchema = z.object({
 	title: z.string().trim().min(5, "Title must be at least 5 characters"),
@@ -155,9 +156,25 @@ export default function TransactionForm({
 			if (insertedTransaction) {
 				setSubmitState("DONE");
 			}
+			toast.add({
+				title: "Transaction Created",
+				type: "success",
+				description: `#${insertedTransaction?.id} - ${insertedTransaction?.title} for ${insertedTransaction?.amount}.`,
+				data: {
+					className: "dark:bg-green-500 bg-green-400",
+				},
+			});
 		} catch (error) {
 			console.error(error);
 			setSubmitState("ERROR");
+			toast.add({
+				title: "Failed to create transaction",
+				type: "error",
+				description: `#${insertedTransaction?.id} - ${insertedTransaction?.title} for ${insertedTransaction?.amount}.`,
+				data: {
+					className: "dark:bg-red-500 bg-green-400",
+				},
+			});
 		}
 	}
 
