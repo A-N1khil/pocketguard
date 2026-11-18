@@ -30,3 +30,7 @@ export interface CreateTransaction {
 	categoryId: number;
 	subCategoryId: number;
 }
+
+export interface UpdateTransaction extends CreateTransaction {
+	id: number;
+}
