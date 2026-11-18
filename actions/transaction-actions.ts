@@ -9,7 +9,7 @@ import {
 } from "@/models/transaction-model";
 import { eq } from "drizzle-orm";
 
-export async function getAllTransactionsNew(): Promise<Transaction[]> {
+export async function getAllTransactions(): Promise<Transaction[]> {
 	return await db.query.t.findMany({
 		columns: { categoryId: false, subCategoryId: false },
 		with: { category: true, subCategory: true },

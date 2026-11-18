@@ -25,7 +25,7 @@ const fieldIconMap: Record<string, TablerIcon> = {
 
 type TransactionFieldIconProps = {
 	field: keyof typeof fieldIconMap;
-	size: number;
+	size?: number;
 };
 
 export default function TransactionFieldIcon({
