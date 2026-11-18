@@ -16,10 +16,9 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Transaction } from "@/models/transaction-model";
-import { useEffect, useState } from "react";
-import { getAllTransactionsSorted } from "@/actions/transaction-actions";
+import { useState } from "react";
 
-interface TransactionDataTableProps {
+interface DataTableProps {
 	columns: ColumnDef<DataTableFeatures, TransactionTableData>[];
 	data: TransactionTableData[];
 }
@@ -29,7 +28,7 @@ interface TransactionDataTableProps {
  *    TODO: Make cells clickable and open CreateTransactionForm in update mode
  */
 
-function DataTable({ columns, data }: TransactionDataTableProps) {
+function DataTable({ columns, data }: DataTableProps) {
 	const table = useTable({
 		features,
 		data,
@@ -80,29 +79,33 @@ function DataTable({ columns, data }: TransactionDataTableProps) {
 	);
 }
 
-export default function TransactionDataTable() {
-	const [transactionTableData, setTransactionTableData] =
-		useState<TransactionTableData[]>();
+type TransactionDataTableProps = {
+	transactions: Transaction[];
+};
 
-	useEffect(() => {
-		const fetchAllTransactions = async () => {
-			const rawTransactions: Transaction[] = await getAllTransactionsSorted(
-				"timestamp",
-				"desc",
-			);
-			if (rawTransactions) {
-				setTransactionTableData(rawTransactions);
-			}
+function _toTableData(transactions: Transaction[]): TransactionTableData[] {
+	return transactions.map((transaction: Transaction): TransactionTableData => {
+		return {
+			...transaction,
+			isUpdated: false,
 		};
+	});
+}
 
-		void fetchAllTransactions();
-	}, []);
+export default function TransactionDataTable({
+	transactions,
+}: TransactionDataTableProps) {
+	const [previousTransactions, setPreviousTransactions] =
+		useState<Transaction[]>(transactions);
 
-	return (
-		<>
-			{transactionTableData && (
-				<DataTable columns={transactionColumns} data={transactionTableData} />
-			)}
-		</>
-	);
+	const [transactionTableData, setTransactionTableData] = useState<
+		TransactionTableData[]
+	>(() => _toTableData(transactions));
+
+	if (transactions !== previousTransactions) {
+		setPreviousTransactions(transactions);
+		setTransactionTableData(_toTableData(transactions));
+	}
+
+	return <DataTable columns={transactionColumns} data={transactionTableData} />;
 }

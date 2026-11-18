@@ -50,12 +50,23 @@ const columnHelper = createColumnHelper<
 >();
 
 export const transactionColumns = columnHelper.columns([
-	columnHelper.accessor("id", {
+	columnHelper.accessor("timestamp", {
 		header: () => (
-			<div className="flex items-center justify-start gap-2">
-				<TransactionFieldIcon field={"id"} />
+			<div className="flex items-center justify-center gap-2">
+				<TransactionFieldIcon field={"timestamp"} /> Time
 			</div>
 		),
+		cell: ({ row }) => {
+			const dayjsDate: Dayjs = dayjs(row.getValue("timestamp"));
+			const formattedDate: string = dayjsDate.format("ll");
+			const formattedTime: string = dayjsDate.format("LT");
+			return (
+				<div className="text-center">
+					{formattedDate}&nbsp;
+					<p className="text-muted-foreground">{formattedTime}</p>
+				</div>
+			);
+		},
 	}),
 	columnHelper.accessor("title", {
 		header: () => (
@@ -124,24 +135,6 @@ export const transactionColumns = columnHelper.columns([
 			}).formatToParts(amount);
 			const finalFormattedAmount = `${parts[0].value} ${parts.slice(1).reduce((acc, part) => `${acc}${part.value}`, "")}`;
 			return <div className="text-right">{finalFormattedAmount}</div>;
-		},
-	}),
-	columnHelper.accessor("timestamp", {
-		header: () => (
-			<div className="flex items-center justify-end gap-2">
-				<TransactionFieldIcon field={"timestamp"} /> Timestamp
-			</div>
-		),
-		cell: ({ row }) => {
-			const dayjsDate: Dayjs = dayjs(row.getValue("timestamp"));
-			const formattedDate: string = dayjsDate.format("ll");
-			const formattedTime: string = dayjsDate.format("LT");
-			return (
-				<div className="text-right">
-					{formattedDate}&nbsp;
-					<span className="text-muted-foreground">{formattedTime}</span>
-				</div>
-			);
 		},
 	}),
 ]);

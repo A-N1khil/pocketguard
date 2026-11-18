@@ -3,7 +3,7 @@ import { ChartAreaInteractive } from "@/components/chart-area-interactive";
 import { SectionCards } from "@/components/section-cards";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import TransactionDataTable from "@/components/transaction/transaction-table/transaction-data-table";
+import DashboardTransactionTable from "@/app/dashboard/dashboard-transaction-table";
 
 export default function Page() {
 	return (
@@ -26,7 +26,7 @@ export default function Page() {
 								<ChartAreaInteractive />
 							</div>
 							<div className="px-4 lg:px-6">
-								<TransactionDataTable />
+								<DashboardTransactionTable />
 							</div>
 						</div>
 					</div>
