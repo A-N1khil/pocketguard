@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
 	InputGroup,
@@ -42,24 +42,38 @@ import {
 	CreateTransaction,
 	Transaction,
 	TransactionType,
+	UpdateTransaction,
 } from "@/models/transaction-model";
-import dayjs from "dayjs";
-import { insertTransaction } from "@/actions/transaction-actions";
+import TransactionFormDateTimePicker from "./TransactionFormDateTimePicker";
+import {
+	insertTransaction,
+	updateTransactionById,
+} from "@/actions/transaction-actions";
 import { cn, SubmitState } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
-import { IconCircleCheck, IconCircleX } from "@tabler/icons-react";
+import {
+	IconCashBanknote,
+	IconCircleCheck,
+	IconCircleX,
+	IconCurrencyDollar,
+	IconMenu3,
+	IconTag,
+	IconTags,
+} from "@tabler/icons-react";
+import { toast } from "@/components/ui/toast";
 
 const newTransactionSchema = z.object({
 	title: z.string().trim().min(5, "Title must be at least 5 characters"),
 	categoryId: z.number().positive("Select a category"),
 	subCategoryId: z.number().positive("Select a subcategory"),
 	transactionType: z.enum(["CREDIT", "DEBIT"], "Select CREDIT or DEBIT"),
+	timestamp: z.iso.datetime(),
 	amount: z
 		.number({ error: "Enter a valid amount" })
 		.positive("Amount should be greater than 0"),
 });
 
-type TransactionFormValues = z.infer<typeof newTransactionSchema>;
+export type TransactionFormValues = z.infer<typeof newTransactionSchema>;
 
 type TransactionFormProps = {
 	dialog: {
@@ -69,6 +83,8 @@ type TransactionFormProps = {
 	transaction?: Transaction;
 };
 
+type TransactionSubmitState = SubmitState | "INHERITED" | "UPDATING";
+
 type CreateCategoryDrawerState =
 	{ mode: "Category" } | { mode: "SubCategory"; category: Category };
 
@@ -76,13 +92,27 @@ export default function TransactionForm({
 	dialog,
 	transaction,
 }: TransactionFormProps) {
+	return (
+		<TransactionFormContent
+			key={JSON.stringify(transaction) ?? "new"}
+			dialog={dialog}
+			transaction={transaction}
+		/>
+	);
+}
+
+function TransactionFormContent({
+	dialog,
+	transaction,
+}: TransactionFormProps) {
 	const { openDialog, setOpenDialog } = dialog;
 	const [categories, setCategories] = useState<Category[]>([]);
-	const [currentCategory, setCurrentCategory] = useState<Category>();
 	const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
 	const [drawerState, setDrawerState] =
 		useState<CreateCategoryDrawerState | null>(null);
-	const [submitState, setSubmitState] = useState<SubmitState>("PENDING");
+	const [submitState, setSubmitState] = useState<TransactionSubmitState>(
+		transaction ? "INHERITED" : "PENDING",
+	);
 	const [insertedTransaction, setInsertedTransaction] = useState<
 		Transaction | undefined
 	>(undefined);
@@ -101,11 +131,6 @@ export default function TransactionForm({
 		void refreshCategories().catch(console.error);
 	}, [refreshCategories]);
 
-	// Change subcategory options with category select
-	const currentSubCategories: SubCategory[] = subCategories.filter(
-		(subCat: SubCategory) => subCat.categoryId === currentCategory?.id,
-	);
-
 	const {
 		control,
 		register,
@@ -120,9 +145,18 @@ export default function TransactionForm({
 			subCategoryId: transaction?.subCategory.id ?? -1,
 			title: transaction?.title ?? "",
 			transactionType: transaction?.transactionType ?? "DEBIT",
+			timestamp: transaction
+				? new Date(transaction.timestamp).toISOString()
+				: new Date().toISOString(),
 			amount: transaction?.amount ?? 0,
 		},
 	});
+	const timestamp = useWatch({ control, name: "timestamp" });
+	const categoryId = useWatch({ control, name: "categoryId" });
+	const currentCategory = categories.find((category) => category.id === categoryId);
+	const currentSubCategories = subCategories.filter(
+		(subCategory) => subCategory.categoryId === categoryId,
+	);
 
 	async function handleTransactionSubmit(
 		formTransaction: TransactionFormValues,
@@ -131,11 +165,14 @@ export default function TransactionForm({
 			return;
 		}
 
+		if (transaction) {
+			return handleTransactionUpdate(formTransaction);
+		}
+
 		setSubmitState("SUBMITTING");
 
 		const createTransaction: CreateTransaction = {
 			...formTransaction,
-			timestamp: dayjs().toISOString(),
 			transactionType: formTransaction.transactionType as TransactionType,
 		};
 		try {
@@ -143,9 +180,62 @@ export default function TransactionForm({
 			if (insertedTransaction) {
 				setSubmitState("DONE");
 			}
+			toast.add({
+				title: "Transaction Created",
+				type: "success",
+				description: `#${insertedTransaction?.id} - ${insertedTransaction?.title} for ${insertedTransaction?.amount}.`,
+				data: {
+					className: "dark:bg-green-500 bg-green-400",
+				},
+			});
 		} catch (error) {
 			console.error(error);
 			setSubmitState("ERROR");
+			toast.add({
+				title: "Failed to create transaction",
+				type: "error",
+				description: `#${insertedTransaction?.id} - ${insertedTransaction?.title} for ${insertedTransaction?.amount}.`,
+				data: {
+					className: "dark:bg-red-500 bg-green-400",
+				},
+			});
+		}
+	}
+
+	async function handleTransactionUpdate(
+		formTransaction: TransactionFormValues,
+	) {
+		setSubmitState("UPDATING");
+
+		const updateTransaction: UpdateTransaction = {
+			...formTransaction,
+			transactionType: formTransaction.transactionType as TransactionType,
+			id: transaction?.id || 0,
+		};
+		try {
+			setInsertedTransaction(await updateTransactionById(updateTransaction));
+			if (insertedTransaction) {
+				setSubmitState("DONE");
+			}
+			toast.add({
+				title: "Transaction Updated",
+				type: "success",
+				description: `#${insertedTransaction?.id} - ${insertedTransaction?.title} for ${insertedTransaction?.amount}.`,
+				data: {
+					className: "dark:bg-green-500 bg-green-400",
+				},
+			});
+		} catch (error) {
+			console.error(error);
+			setSubmitState("ERROR");
+			toast.add({
+				title: "Failed to update transaction",
+				type: "error",
+				description: `#${insertedTransaction?.id} - ${insertedTransaction?.title} for ${insertedTransaction?.amount}.`,
+				data: {
+					className: "dark:bg-red-500 bg-green-400",
+				},
+			});
 		}
 	}
 
@@ -216,10 +306,10 @@ export default function TransactionForm({
 				<Button type="submit" disabled={!isValid || isSubmitting}>
 					{isSubmitting ? (
 						<>
-							<Spinner /> Creating...
+							<Spinner /> {transaction ? "Updating..." : "Creating..."}
 						</>
 					) : (
-						"Create transaction"
+						`${transaction ? "Update" : "Create"} transaction`
 					)}
 				</Button>
 			);
@@ -241,7 +331,7 @@ export default function TransactionForm({
 					<DialogContent className="sm:max-w-1/3">
 						<DialogHeader>
 							<DialogTitle>
-								{transaction ? "Create" : "Update"} transaction
+								{transaction ? "Update" : "Create"} transaction
 							</DialogTitle>
 							<DialogDescription>
 								Enter the details of your transaction.
@@ -254,7 +344,9 @@ export default function TransactionForm({
 						>
 							<FieldGroup>
 								<Field data-invalid={Boolean(errors.title)}>
-									<FieldLabel htmlFor="title">Title</FieldLabel>
+									<FieldLabel htmlFor="title">
+										<IconMenu3 size={18} /> Title
+									</FieldLabel>
 									<Input
 										id="title"
 										type="text"
@@ -274,6 +366,7 @@ export default function TransactionForm({
 									render={({ field, fieldState }) => (
 										<Field data-invalid={fieldState.invalid}>
 											<FieldLabel htmlFor="transactionType">
+												<IconCashBanknote size={18} />
 												Transaction type
 											</FieldLabel>
 											<Select
@@ -307,23 +400,34 @@ export default function TransactionForm({
 										</Field>
 									)}
 								/>
+								<TransactionFormDateTimePicker
+									register={register}
+									timestamp={timestamp}
+									error={errors.timestamp?.message}
+									onTimestampChange={(value) => {
+										setValue("timestamp", value, {
+											shouldDirty: true,
+											shouldTouch: true,
+											shouldValidate: true,
+										});
+										resetSubmitState();
+									}}
+								/>
 								<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
 									<Controller
 										name="categoryId"
 										control={control}
 										render={({ field }) => (
 											<Field>
-												<FieldLabel htmlFor="category">Category</FieldLabel>
+												<FieldLabel htmlFor="category">
+													<IconTag size={18} />
+													Category
+												</FieldLabel>
 												<Select
 													name={field.name}
 													value={field.value === -1 ? null : field.value}
 													onValueChange={(value) => {
 														field.onChange(value);
-														setCurrentCategory(
-															categories.find(
-																(category) => category.id === value,
-															),
-														);
 														setValue("subCategoryId", -1, {
 															shouldValidate: true,
 															shouldDirty: true,
@@ -342,7 +446,10 @@ export default function TransactionForm({
 															{
 																categories.find(
 																	(category) => category.id === field.value,
-																)?.name
+																)?.name ??
+																(transaction?.category.id === field.value
+																	? transaction.category.name
+																	: undefined)
 															}
 														</SelectValue>
 													</SelectTrigger>
@@ -366,6 +473,7 @@ export default function TransactionForm({
 										render={({ field }) => (
 											<Field>
 												<FieldLabel htmlFor="subcategory">
+													<IconTags size={18} />
 													Subcategory
 												</FieldLabel>
 												<Select
@@ -400,7 +508,10 @@ export default function TransactionForm({
 																currentSubCategories.find(
 																	(subCategory) =>
 																		subCategory.id === field.value,
-																)?.name
+																)?.name ??
+																(transaction?.subCategory.id === field.value
+																	? transaction.subCategory.name
+																	: undefined)
 															}
 														</SelectValue>
 													</SelectTrigger>
@@ -450,7 +561,10 @@ export default function TransactionForm({
 									)}
 								</div>
 								<Field data-invalid={Boolean(errors.amount)}>
-									<FieldLabel htmlFor="amount">Amount</FieldLabel>
+									<FieldLabel htmlFor="amount">
+										<IconCurrencyDollar size={18} />
+										Amount
+									</FieldLabel>
 									<InputGroup>
 										<InputGroupAddon>
 											<InputGroupText>$</InputGroupText>
