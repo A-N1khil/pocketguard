@@ -5,41 +5,15 @@ import { transactionTable } from "@/db/schema";
 import {
 	CreateTransaction,
 	Transaction,
-	TransactionSchema,
+	UpdateTransaction,
 } from "@/models/transaction-model";
-import {
-	getCategoryById,
-	getSubCategoryById,
-} from "@/actions/category-actions";
-import { Category } from "@/models/category-model";
+import { eq } from "drizzle-orm";
 
-export async function getAllTransactions(): Promise<Transaction[]> {
-	const rawTransactionsFromDB: TransactionSchema[] = await db
-		.select()
-		.from(transactionTable);
-
-	const transactions: Transaction[] = [];
-	for (const dbTransaction of rawTransactionsFromDB) {
-		const category: Category | undefined = await getCategoryById(
-			dbTransaction.categoryId,
-		);
-		const subCategory = await getSubCategoryById(
-			dbTransaction.subCategoryId,
-			dbTransaction.categoryId,
-		);
-		const transaction = {
-			id: dbTransaction.id,
-			title: dbTransaction.title,
-			transactionType: dbTransaction.transactionType,
-			amount: dbTransaction.amount,
-			timestamp: dbTransaction.timestamp,
-			category: category,
-			subCategory: subCategory,
-		} as Transaction;
-		transactions.push(transaction);
-	}
-
-	return transactions;
+export async function getAllTransactionsNew(): Promise<Transaction[]> {
+	return await db.query.t.findMany({
+		columns: { categoryId: false, subCategoryId: false },
+		with: { category: true, subCategory: true },
+	});
 }
 
 export async function insertTransaction(
@@ -67,11 +41,18 @@ export async function getTransactionWithId(
 	});
 }
 
-export async function getAllTransactionsNew(): Promise<Transaction[]> {
-	return await db.query.t.findMany({
-		columns: { categoryId: false, subCategoryId: false },
-		with: { category: true, subCategory: true },
-	});
+export async function updateTransactionById(
+	modifiedTransaction: UpdateTransaction,
+): Promise<Transaction | undefined> {
+	const updateResponse: { updatedId: number }[] = await db
+		.update(transactionTable)
+		.set(modifiedTransaction)
+		.where(eq(transactionTable.id, modifiedTransaction.id))
+		.returning({ updatedId: transactionTable.id });
+
+	if (updateResponse && updateResponse.length > 0) {
+		return getTransactionWithId(updateResponse[0].updatedId);
+	}
 }
 
 // getTransactionWithId(1);

@@ -9,7 +9,7 @@ import {
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { CirclePlusIcon, MailIcon } from "lucide-react";
-import { useState } from "react";
+import React, { useState } from "react";
 import TransactionForm from "@/components/transaction/create-transaction-form";
 
 export function NavMain({
@@ -65,7 +65,7 @@ export function NavMain({
 					</SidebarMenu>
 				</SidebarGroupContent>
 			</SidebarGroup>
-			<TransactionForm dialog={dialog} />
+			{openDialog && <TransactionForm dialog={dialog} />}
 		</>
 	);
 }

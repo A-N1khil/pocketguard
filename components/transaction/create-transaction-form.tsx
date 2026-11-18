@@ -42,9 +42,13 @@ import {
 	CreateTransaction,
 	Transaction,
 	TransactionType,
+	UpdateTransaction,
 } from "@/models/transaction-model";
 import TransactionFormDateTimePicker from "./TransactionFormDateTimePicker";
-import { insertTransaction } from "@/actions/transaction-actions";
+import {
+	insertTransaction,
+	updateTransactionById,
+} from "@/actions/transaction-actions";
 import { cn, SubmitState } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -79,6 +83,8 @@ type TransactionFormProps = {
 	transaction?: Transaction;
 };
 
+type TransactionSubmitState = SubmitState | "INHERITED" | "UPDATING";
+
 type CreateCategoryDrawerState =
 	{ mode: "Category" } | { mode: "SubCategory"; category: Category };
 
@@ -86,13 +92,27 @@ export default function TransactionForm({
 	dialog,
 	transaction,
 }: TransactionFormProps) {
+	return (
+		<TransactionFormContent
+			key={JSON.stringify(transaction) ?? "new"}
+			dialog={dialog}
+			transaction={transaction}
+		/>
+	);
+}
+
+function TransactionFormContent({
+	dialog,
+	transaction,
+}: TransactionFormProps) {
 	const { openDialog, setOpenDialog } = dialog;
 	const [categories, setCategories] = useState<Category[]>([]);
-	const [currentCategory, setCurrentCategory] = useState<Category>();
 	const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
 	const [drawerState, setDrawerState] =
 		useState<CreateCategoryDrawerState | null>(null);
-	const [submitState, setSubmitState] = useState<SubmitState>("PENDING");
+	const [submitState, setSubmitState] = useState<TransactionSubmitState>(
+		transaction ? "INHERITED" : "PENDING",
+	);
 	const [insertedTransaction, setInsertedTransaction] = useState<
 		Transaction | undefined
 	>(undefined);
@@ -110,11 +130,6 @@ export default function TransactionForm({
 	useEffect(() => {
 		void refreshCategories().catch(console.error);
 	}, [refreshCategories]);
-
-	// Change subcategory options with category select
-	const currentSubCategories: SubCategory[] = subCategories.filter(
-		(subCat: SubCategory) => subCat.categoryId === currentCategory?.id,
-	);
 
 	const {
 		control,
@@ -137,12 +152,21 @@ export default function TransactionForm({
 		},
 	});
 	const timestamp = useWatch({ control, name: "timestamp" });
+	const categoryId = useWatch({ control, name: "categoryId" });
+	const currentCategory = categories.find((category) => category.id === categoryId);
+	const currentSubCategories = subCategories.filter(
+		(subCategory) => subCategory.categoryId === categoryId,
+	);
 
 	async function handleTransactionSubmit(
 		formTransaction: TransactionFormValues,
 	) {
 		if (!formTransaction.categoryId || !formTransaction.subCategoryId) {
 			return;
+		}
+
+		if (transaction) {
+			return handleTransactionUpdate(formTransaction);
 		}
 
 		setSubmitState("SUBMITTING");
@@ -169,6 +193,43 @@ export default function TransactionForm({
 			setSubmitState("ERROR");
 			toast.add({
 				title: "Failed to create transaction",
+				type: "error",
+				description: `#${insertedTransaction?.id} - ${insertedTransaction?.title} for ${insertedTransaction?.amount}.`,
+				data: {
+					className: "dark:bg-red-500 bg-green-400",
+				},
+			});
+		}
+	}
+
+	async function handleTransactionUpdate(
+		formTransaction: TransactionFormValues,
+	) {
+		setSubmitState("UPDATING");
+
+		const updateTransaction: UpdateTransaction = {
+			...formTransaction,
+			transactionType: formTransaction.transactionType as TransactionType,
+			id: transaction?.id || 0,
+		};
+		try {
+			setInsertedTransaction(await updateTransactionById(updateTransaction));
+			if (insertedTransaction) {
+				setSubmitState("DONE");
+			}
+			toast.add({
+				title: "Transaction Updated",
+				type: "success",
+				description: `#${insertedTransaction?.id} - ${insertedTransaction?.title} for ${insertedTransaction?.amount}.`,
+				data: {
+					className: "dark:bg-green-500 bg-green-400",
+				},
+			});
+		} catch (error) {
+			console.error(error);
+			setSubmitState("ERROR");
+			toast.add({
+				title: "Failed to update transaction",
 				type: "error",
 				description: `#${insertedTransaction?.id} - ${insertedTransaction?.title} for ${insertedTransaction?.amount}.`,
 				data: {
@@ -245,10 +306,10 @@ export default function TransactionForm({
 				<Button type="submit" disabled={!isValid || isSubmitting}>
 					{isSubmitting ? (
 						<>
-							<Spinner /> Creating...
+							<Spinner /> {transaction ? "Updating..." : "Creating..."}
 						</>
 					) : (
-						"Create transaction"
+						`${transaction ? "Update" : "Create"} transaction`
 					)}
 				</Button>
 			);
@@ -270,7 +331,7 @@ export default function TransactionForm({
 					<DialogContent className="sm:max-w-1/3">
 						<DialogHeader>
 							<DialogTitle>
-								{transaction ? "Create" : "Update"} transaction
+								{transaction ? "Update" : "Create"} transaction
 							</DialogTitle>
 							<DialogDescription>
 								Enter the details of your transaction.
@@ -367,11 +428,6 @@ export default function TransactionForm({
 													value={field.value === -1 ? null : field.value}
 													onValueChange={(value) => {
 														field.onChange(value);
-														setCurrentCategory(
-															categories.find(
-																(category) => category.id === value,
-															),
-														);
 														setValue("subCategoryId", -1, {
 															shouldValidate: true,
 															shouldDirty: true,
@@ -390,7 +446,10 @@ export default function TransactionForm({
 															{
 																categories.find(
 																	(category) => category.id === field.value,
-																)?.name
+																)?.name ??
+																(transaction?.category.id === field.value
+																	? transaction.category.name
+																	: undefined)
 															}
 														</SelectValue>
 													</SelectTrigger>
@@ -449,7 +508,10 @@ export default function TransactionForm({
 																currentSubCategories.find(
 																	(subCategory) =>
 																		subCategory.id === field.value,
-																)?.name
+																)?.name ??
+																(transaction?.subCategory.id === field.value
+																	? transaction.subCategory.name
+																	: undefined)
 															}
 														</SelectValue>
 													</SelectTrigger>
