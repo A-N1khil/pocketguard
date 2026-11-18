@@ -51,16 +51,9 @@ import {
 } from "@/actions/transaction-actions";
 import { cn, SubmitState } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
-import {
-	IconCashBanknote,
-	IconCircleCheck,
-	IconCircleX,
-	IconCurrencyDollar,
-	IconMenu3,
-	IconTag,
-	IconTags,
-} from "@tabler/icons-react";
+import { IconCircleCheck, IconCircleX } from "@tabler/icons-react";
 import { toast } from "@/components/ui/toast";
+import TransactionFieldIcon from "@/components/transaction/transaction-field-icon";
 
 const newTransactionSchema = z.object({
 	title: z.string().trim().min(5, "Title must be at least 5 characters"),
@@ -101,10 +94,7 @@ export default function TransactionForm({
 	);
 }
 
-function TransactionFormContent({
-	dialog,
-	transaction,
-}: TransactionFormProps) {
+function TransactionFormContent({ dialog, transaction }: TransactionFormProps) {
 	const { openDialog, setOpenDialog } = dialog;
 	const [categories, setCategories] = useState<Category[]>([]);
 	const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
@@ -153,7 +143,9 @@ function TransactionFormContent({
 	});
 	const timestamp = useWatch({ control, name: "timestamp" });
 	const categoryId = useWatch({ control, name: "categoryId" });
-	const currentCategory = categories.find((category) => category.id === categoryId);
+	const currentCategory = categories.find(
+		(category) => category.id === categoryId,
+	);
 	const currentSubCategories = subCategories.filter(
 		(subCategory) => subCategory.categoryId === categoryId,
 	);
@@ -345,7 +337,7 @@ function TransactionFormContent({
 							<FieldGroup>
 								<Field data-invalid={Boolean(errors.title)}>
 									<FieldLabel htmlFor="title">
-										<IconMenu3 size={18} /> Title
+										<TransactionFieldIcon field="title" size={18} /> Title
 									</FieldLabel>
 									<Input
 										id="title"
@@ -366,7 +358,10 @@ function TransactionFormContent({
 									render={({ field, fieldState }) => (
 										<Field data-invalid={fieldState.invalid}>
 											<FieldLabel htmlFor="transactionType">
-												<IconCashBanknote size={18} />
+												<TransactionFieldIcon
+													field="transactionType"
+													size={18}
+												/>
 												Transaction type
 											</FieldLabel>
 											<Select
@@ -420,7 +415,7 @@ function TransactionFormContent({
 										render={({ field }) => (
 											<Field>
 												<FieldLabel htmlFor="category">
-													<IconTag size={18} />
+													<TransactionFieldIcon field="category" size={18} />
 													Category
 												</FieldLabel>
 												<Select
@@ -443,14 +438,12 @@ function TransactionFormContent({
 														className="w-full"
 													>
 														<SelectValue placeholder="Select a Category">
-															{
-																categories.find(
-																	(category) => category.id === field.value,
-																)?.name ??
+															{categories.find(
+																(category) => category.id === field.value,
+															)?.name ??
 																(transaction?.category.id === field.value
 																	? transaction.category.name
-																	: undefined)
-															}
+																	: undefined)}
 														</SelectValue>
 													</SelectTrigger>
 													<SelectContent>
@@ -473,7 +466,7 @@ function TransactionFormContent({
 										render={({ field }) => (
 											<Field>
 												<FieldLabel htmlFor="subcategory">
-													<IconTags size={18} />
+													<TransactionFieldIcon field="subCategory" size={18} />
 													Subcategory
 												</FieldLabel>
 												<Select
@@ -504,15 +497,12 @@ function TransactionFormContent({
 																		: "Select a Subcategory"
 															}
 														>
-															{
-																currentSubCategories.find(
-																	(subCategory) =>
-																		subCategory.id === field.value,
-																)?.name ??
+															{currentSubCategories.find(
+																(subCategory) => subCategory.id === field.value,
+															)?.name ??
 																(transaction?.subCategory.id === field.value
 																	? transaction.subCategory.name
-																	: undefined)
-															}
+																	: undefined)}
 														</SelectValue>
 													</SelectTrigger>
 													<SelectContent>
@@ -562,7 +552,7 @@ function TransactionFormContent({
 								</div>
 								<Field data-invalid={Boolean(errors.amount)}>
 									<FieldLabel htmlFor="amount">
-										<IconCurrencyDollar size={18} />
+										<TransactionFieldIcon field="amount" size={18} />
 										Amount
 									</FieldLabel>
 									<InputGroup>
