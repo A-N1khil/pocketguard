@@ -6,7 +6,7 @@ import {
 	type DataTableFeatures,
 	type TransactionTableData,
 	transactionColumns,
-} from "@/app/dashboard/dashboard-table/transaction-table-data";
+} from "@/components/transaction/transaction-table/transaction-table-data";
 import {
 	Table,
 	TableBody,
@@ -17,12 +17,9 @@ import {
 } from "@/components/ui/table";
 import { Transaction } from "@/models/transaction-model";
 import { useEffect, useState } from "react";
-import {
-	getAllTransactions,
-	getAllTransactionsSorted,
-} from "@/actions/transaction-actions";
+import { getAllTransactionsSorted } from "@/actions/transaction-actions";
 
-interface DashboardDataTableProps {
+interface TransactionDataTableProps {
 	columns: ColumnDef<DataTableFeatures, TransactionTableData>[];
 	data: TransactionTableData[];
 }
@@ -32,7 +29,7 @@ interface DashboardDataTableProps {
  *    TODO: Make cells clickable and open CreateTransactionForm in update mode
  */
 
-function DataTable({ columns, data }: DashboardDataTableProps) {
+function DataTable({ columns, data }: TransactionDataTableProps) {
 	const table = useTable({
 		features,
 		data,
@@ -83,7 +80,7 @@ function DataTable({ columns, data }: DashboardDataTableProps) {
 	);
 }
 
-export default function DashboardDataTable() {
+export default function TransactionDataTable() {
 	const [transactionTableData, setTransactionTableData] =
 		useState<TransactionTableData[]>();
 
