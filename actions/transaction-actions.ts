@@ -9,21 +9,53 @@ import {
 } from "@/models/transaction-model";
 import { eq } from "drizzle-orm";
 
-export async function getAllTransactions(): Promise<Transaction[]> {
+type _PaginationOptions = {
+	page?: number;
+	pageSize?: number;
+};
+
+function _getPaginationOptions(pagination?: _PaginationOptions) {
+	if (!pagination) {
+		return {};
+	}
+
+	const { page = 1, pageSize = 10 } = pagination;
+
+	if (
+		!Number.isSafeInteger(page) ||
+		!Number.isSafeInteger(pageSize) ||
+		page < 1 ||
+		pageSize < 1
+	) {
+		throw new Error("Page and pagesize must be > 1");
+	}
+
+	return {
+		limit: pageSize,
+		offset: (page - 1) * pageSize,
+	};
+}
+
+export async function getAllTransactions(
+	pagination?: _PaginationOptions,
+): Promise<Transaction[]> {
 	return await db.query.t.findMany({
 		columns: { categoryId: false, subCategoryId: false },
 		with: { category: true, subCategory: true },
+		..._getPaginationOptions(pagination),
 	});
 }
 
 export async function getAllTransactionsSorted(
 	key: keyof Transaction,
 	orderBy: "asc" | "desc" = "asc",
+	pagination?: _PaginationOptions,
 ): Promise<Transaction[]> {
 	return await db.query.t.findMany({
 		columns: { categoryId: false, subCategoryId: false },
 		with: { category: true, subCategory: true },
 		orderBy: { [key]: orderBy },
+		..._getPaginationOptions(pagination),
 	});
 }
 
