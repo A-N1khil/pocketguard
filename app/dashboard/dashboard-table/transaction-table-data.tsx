@@ -1,4 +1,4 @@
-import { TransactionType } from "@/models/transaction-model";
+import { type Transaction } from "@/models/transaction-model";
 import {
 	columnFilteringFeature,
 	columnVisibilityFeature,
@@ -16,14 +16,15 @@ import {
 } from "@tanstack/react-table";
 import TransactionFieldIcon from "@/components/transaction/transaction-field-icon";
 import { Pill, PillIndicator } from "@/components/kibo-ui/pill";
+import dayjs, { Dayjs } from "dayjs";
+import localizedFormat from "dayjs/plugin/localizedFormat";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 
-export type TransactionTableData = {
-	id: number;
-	title: string;
-	transactionType: TransactionType;
-	category: string;
-	subCategory: string;
-	amount: number;
+dayjs.extend(localizedFormat);
+dayjs.extend(isSameOrBefore);
+
+export type TransactionTableData = Transaction & {
+	isUpdated?: boolean;
 };
 
 export const features = tableFeatures({
@@ -84,22 +85,30 @@ export const transactionColumns = columnHelper.columns([
 			);
 		},
 	}),
-	columnHelper.accessor("category", {
-		header: () => (
-			<div className="flex items-center justify-start gap-2">
-				<TransactionFieldIcon field={"category"} />
-				Category
-			</div>
-		),
-	}),
-	columnHelper.accessor("subCategory", {
-		header: () => (
-			<div className="flex items-center justify-start gap-2">
-				<TransactionFieldIcon field={"subCategory"} />
-				SubCategory
-			</div>
-		),
-	}),
+	columnHelper.accessor(
+		(transaction: TransactionTableData) => transaction.category.name,
+		{
+			id: "category",
+			header: () => (
+				<div className="flex items-center justify-start gap-2">
+					<TransactionFieldIcon field={"category"} />
+					Category
+				</div>
+			),
+		},
+	),
+	columnHelper.accessor(
+		(transaction: TransactionTableData) => transaction.subCategory.name,
+		{
+			id: "subCategory",
+			header: () => (
+				<div className="flex items-center justify-start gap-2">
+					<TransactionFieldIcon field={"subCategory"} />
+					SubCategory
+				</div>
+			),
+		},
+	),
 	columnHelper.accessor("amount", {
 		header: () => (
 			<div className="flex items-center justify-end gap-2">
@@ -115,6 +124,24 @@ export const transactionColumns = columnHelper.columns([
 			}).formatToParts(amount);
 			const finalFormattedAmount = `${parts[0].value} ${parts.slice(1).reduce((acc, part) => `${acc}${part.value}`, "")}`;
 			return <div className="text-right">{finalFormattedAmount}</div>;
+		},
+	}),
+	columnHelper.accessor("timestamp", {
+		header: () => (
+			<div className="flex items-center justify-end gap-2">
+				<TransactionFieldIcon field={"timestamp"} /> Timestamp
+			</div>
+		),
+		cell: ({ row }) => {
+			const dayjsDate: Dayjs = dayjs(row.getValue("timestamp"));
+			const formattedDate: string = dayjsDate.format("ll");
+			const formattedTime: string = dayjsDate.format("LT");
+			return (
+				<div className="text-right">
+					{formattedDate}&nbsp;
+					<span className="text-muted-foreground">{formattedTime}</span>
+				</div>
+			);
 		},
 	}),
 ]);

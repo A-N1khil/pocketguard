@@ -16,6 +16,17 @@ export async function getAllTransactions(): Promise<Transaction[]> {
 	});
 }
 
+export async function getAllTransactionsSorted(
+	key: keyof Transaction,
+	orderBy: "asc" | "desc" = "asc",
+): Promise<Transaction[]> {
+	return await db.query.t.findMany({
+		columns: { categoryId: false, subCategoryId: false },
+		with: { category: true, subCategory: true },
+		orderBy: { [key]: orderBy },
+	});
+}
+
 export async function insertTransaction(
 	transaction: CreateTransaction,
 ): Promise<Transaction | undefined> {

@@ -1,10 +1,10 @@
 "use client";
 
-import { useTable, type ColumnDef, type RowData } from "@tanstack/react-table";
+import { useTable, type ColumnDef } from "@tanstack/react-table";
 import {
 	features,
 	type DataTableFeatures,
-	TransactionTableData,
+	type TransactionTableData,
 	transactionColumns,
 } from "@/app/dashboard/dashboard-table/transaction-table-data";
 import {
@@ -17,28 +17,27 @@ import {
 } from "@/components/ui/table";
 import { Transaction } from "@/models/transaction-model";
 import { useEffect, useState } from "react";
-import { getAllTransactions } from "@/actions/transaction-actions";
+import {
+	getAllTransactions,
+	getAllTransactionsSorted,
+} from "@/actions/transaction-actions";
 
-interface DashboardDataTableProps<TData extends RowData> {
-	columns: ColumnDef<DataTableFeatures, TData>[];
-	data: TData[];
+interface DashboardDataTableProps {
+	columns: ColumnDef<DataTableFeatures, TransactionTableData>[];
+	data: TransactionTableData[];
 }
 
 /*
  * TODO: Add Select box
- *  TODO: Add timestamp as column (formatting enabled)
- *   TODO: Add pills
  *    TODO: Make cells clickable and open CreateTransactionForm in update mode
  */
 
-function DataTable<TData extends RowData>({
-	columns,
-	data,
-}: DashboardDataTableProps<TData>) {
+function DataTable({ columns, data }: DashboardDataTableProps) {
 	const table = useTable({
 		features,
 		data,
 		columns,
+		getRowId: (transaction: TransactionTableData) => String(transaction.id),
 	});
 
 	return (
@@ -90,18 +89,12 @@ export default function DashboardDataTable() {
 
 	useEffect(() => {
 		const fetchAllTransactions = async () => {
-			const rawTransactions: Transaction[] = await getAllTransactions();
-			// TODO: Add sorting by timestamp
+			const rawTransactions: Transaction[] = await getAllTransactionsSorted(
+				"timestamp",
+				"desc",
+			);
 			if (rawTransactions) {
-				setTransactionTableData(
-					rawTransactions.map((transaction: Transaction) => {
-						return {
-							...transaction,
-							category: transaction.category.name,
-							subCategory: transaction.subCategory.name,
-						};
-					}),
-				);
+				setTransactionTableData(rawTransactions);
 			}
 		};
 

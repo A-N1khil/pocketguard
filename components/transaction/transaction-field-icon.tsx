@@ -21,6 +21,7 @@ const fieldIconMap: Record<string, TablerIcon> = {
 	amount: IconCurrencyDollar,
 	date: IconCalendarDollar,
 	time: IconClock12,
+	timestamp: IconCalendarDollar,
 };
 
 type TransactionFieldIconProps = {
