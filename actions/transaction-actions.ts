@@ -5,25 +5,40 @@ import { transactionTable } from "@/db/schema";
 import {
 	CreateTransaction,
 	Transaction,
+	TransactionType,
 	UpdateTransaction,
 } from "@/models/transaction-model";
 import { eq } from "drizzle-orm";
 
-export async function getAllTransactions(): Promise<Transaction[]> {
-	return await db.query.t.findMany({
-		columns: { categoryId: false, subCategoryId: false },
-		with: { category: true, subCategory: true },
-	});
+type _SortingOptions = {
+	key?: keyof typeof transactionTable.$inferSelect;
+	order?: "asc" | "desc";
+};
+
+function _getSortingOptions(
+	sortingOptions: _SortingOptions,
+	defaultTimestampSort: boolean,
+):
+	| Partial<Record<keyof typeof transactionTable.$inferSelect, "asc" | "desc">>
+	| undefined {
+	if (defaultTimestampSort) {
+		return { timestamp: "asc" };
+	}
+
+	const { key, order = "asc" } = sortingOptions;
+	return key ? { [key]: order } : undefined;
 }
 
-export async function getAllTransactionsSorted(
-	key: keyof Transaction,
-	orderBy: "asc" | "desc" = "asc",
-): Promise<Transaction[]> {
+export async function getAllTransactions({
+	defaultTimestampSort = false,
+	sorting = {},
+}: { sorting?: _SortingOptions; defaultTimestampSort?: boolean } = {}): Promise<
+	Transaction[]
+> {
 	return await db.query.t.findMany({
 		columns: { categoryId: false, subCategoryId: false },
 		with: { category: true, subCategory: true },
-		orderBy: { [key]: orderBy },
+		orderBy: _getSortingOptions(sorting, defaultTimestampSort),
 	});
 }
 
@@ -64,6 +79,20 @@ export async function updateTransactionById(
 	if (updateResponse && updateResponse.length > 0) {
 		return getTransactionWithId(updateResponse[0].updatedId);
 	}
+}
+
+export async function getAllTransactionsOfType(
+	transactionType: TransactionType,
+	{
+		defaultTimestampSort = false,
+		sorting = {},
+	}: { sorting?: _SortingOptions; defaultTimestampSort?: boolean } = {},
+): Promise<Transaction[]> {
+	return await db.query.t.findMany({
+		where: { transactionType },
+		with: { category: true, subCategory: true },
+		orderBy: _getSortingOptions(sorting, defaultTimestampSort),
+	});
 }
 
 // getTransactionWithId(1);

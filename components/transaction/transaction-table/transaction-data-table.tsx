@@ -1,16 +1,7 @@
 "use client";
 
-import {
-	useTable,
-	type Table as TanStackTable,
-	FlexRender,
-} from "@tanstack/react-table";
-import {
-	features,
-	type DataTableFeatures,
-	type TransactionTableData,
-	transactionColumns,
-} from "@/components/transaction/transaction-table/transaction-table-data";
+import { type ReactTable, FlexRender } from "@tanstack/react-table";
+import type { BaseDataTableFeatures } from "@/components/transaction/transaction-table/transaction-table-base-features";
 import {
 	Table,
 	TableBody,
@@ -20,7 +11,6 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Transaction } from "@/models/transaction-model";
-import { useState } from "react";
 import {
 	Pagination,
 	PaginationContent,
@@ -31,16 +21,11 @@ import {
 	PaginationPrevious,
 } from "@/components/ui/pagination";
 
-interface DataTableProps {
-	table: TanStackTable<DataTableFeatures, TransactionTableData>;
-}
+type DataTableProps<TRow extends Transaction> = {
+	table: ReactTable<BaseDataTableFeatures, TRow>;
+};
 
-/*
- * TODO: Add Select box
- *    TODO: Make cells clickable and open CreateTransactionForm in update mode
- */
-
-function DataTable({ table }: DataTableProps) {
+function DataTable<TRow extends Transaction>({ table }: DataTableProps<TRow>) {
 	return (
 		<div className="overflow-hidden rounded-md border">
 			<Table>
@@ -85,42 +70,10 @@ function DataTable({ table }: DataTableProps) {
 	);
 }
 
-type TransactionDataTableProps = {
-	transactions: Transaction[];
-};
-
-function _toTableData(transactions: Transaction[]): TransactionTableData[] {
-	return transactions.map((transaction: Transaction): TransactionTableData => {
-		return {
-			...transaction,
-			isUpdated: false,
-		};
-	});
-}
-
-export default function TransactionDataTable({
-	transactions,
-}: TransactionDataTableProps) {
-	const [previousTransactions, setPreviousTransactions] =
-		useState<Transaction[]>(transactions);
-
-	const [transactionTableData, setTransactionTableData] = useState<
-		TransactionTableData[]
-	>(() => _toTableData(transactions));
-
-	if (transactions !== previousTransactions) {
-		setPreviousTransactions(transactions);
-		setTransactionTableData(_toTableData(transactions));
-	}
-
-	const table = useTable({
-		features,
-		data: transactionTableData,
-		columns: transactionColumns,
-		getRowId: (transaction: TransactionTableData) => String(transaction.id),
-	});
-
-	const { pageIndex } = table.state.pagination;
+export default function TransactionDataTable<TRow extends Transaction>({
+	table,
+}: DataTableProps<TRow>) {
+	const { pageIndex, pageSize } = table.state.pagination;
 	const pageCount = table.getPageCount();
 	const visiblePageCount = Math.min(3, pageCount);
 	const firstPageIndex = Math.max(
@@ -133,82 +86,71 @@ export default function TransactionDataTable({
 		(_, offset) => firstPageIndex + offset,
 	);
 
+	// Metadata
+	const rowCount: number = table.getPrePaginatedRowModel().rows.length;
+	const end: number = Math.min((pageIndex + 1) * pageSize, rowCount);
+	const start: number = end === 0 ? 0 : Math.min(pageIndex * pageSize + 1, end);
+
 	return (
 		<div className="grid grid-cols-4 gap-2">
-			{transactionTableData && (
-				<>
-					<div className="col-span-full col-start-1">
-						<DataTable table={table} />
-					</div>
-					<div className="col-span-full flex items-center justify-between gap-4">
-						<div className="whitespace-nowrap text-sm">
-							Showing items{" "}
-							<span className="font-semibold">
-								{table.state.pagination.pageIndex * 10 + 1}
-							</span>
-							{" - "}
-							<span className="font-semibold">
-								{Math.min(
-									table.state.pagination.pageIndex * 10 + 10,
-									transactionTableData.length,
-								)}
-							</span>
-							{"  "}
-							of{" "}
-							<span className="font-semibold">
-								{transactionTableData.length}
-							</span>{" "}
-							records
-						</div>
-						<Pagination className="justify-end mx-0 w-auto">
-							<PaginationContent>
-								<PaginationItem>
-									<PaginationPrevious
-										onClick={() => table.previousPage()}
-										aria-disabled={!table.getCanPreviousPage()}
-										className={
-											!table.getCanPreviousPage()
-												? "pointer-events-none opacity-50"
-												: undefined
-										}
-									/>
-								</PaginationItem>
-								{firstPageIndex > 0 && (
-									<PaginationItem>
-										<PaginationEllipsis />
-									</PaginationItem>
-								)}
-								{visiblePageIndexes.map((index) => (
-									<PaginationItem key={index}>
-										<PaginationLink
-											onClick={() => table.setPageIndex(index)}
-											isActive={pageIndex === index}
-										>
-											{index + 1}
-										</PaginationLink>
-									</PaginationItem>
-								))}
-								{endPageIndex < pageCount && (
-									<PaginationItem>
-										<PaginationEllipsis />
-									</PaginationItem>
-								)}
-								<PaginationItem>
-									<PaginationNext
-										onClick={() => table.nextPage()}
-										aria-disabled={!table.getCanNextPage()}
-										className={
-											!table.getCanNextPage()
-												? "pointer-events-none opacity-50"
-												: undefined
-										}
-									/>
-								</PaginationItem>
-							</PaginationContent>
-						</Pagination>
-					</div>
-				</>
-			)}
+			<div className="col-span-full col-start-1">
+				<DataTable table={table} />
+			</div>
+			<div className="col-span-full grid grid-cols-[1fr_auto_1fr] items-center">
+				<div className="col-start-2 whitespace-nowrap justify-between text-sm">
+					Showing items <span className="font-semibold">{start}</span>
+					{" - "}
+					<span className="font-semibold">{end}</span>
+					{"  "}
+					of <span className="font-semibold">{rowCount}</span> records
+				</div>
+				<Pagination className="col-start-3 justify-end mx-0 w-auto">
+					<PaginationContent>
+						<PaginationItem>
+							<PaginationPrevious
+								onClick={() => table.previousPage()}
+								aria-disabled={!table.getCanPreviousPage()}
+								className={
+									!table.getCanPreviousPage()
+										? "pointer-events-none opacity-50"
+										: undefined
+								}
+							/>
+						</PaginationItem>
+						{firstPageIndex > 0 && (
+							<PaginationItem>
+								<PaginationEllipsis />
+							</PaginationItem>
+						)}
+						{visiblePageIndexes.map((index) => (
+							<PaginationItem key={index}>
+								<PaginationLink
+									onClick={() => table.setPageIndex(index)}
+									isActive={pageIndex === index}
+								>
+									{index + 1}
+								</PaginationLink>
+							</PaginationItem>
+						))}
+						{endPageIndex < pageCount && (
+							<PaginationItem>
+								<PaginationEllipsis />
+							</PaginationItem>
+						)}
+						<PaginationItem>
+							<PaginationNext
+								onClick={() => table.nextPage()}
+								aria-disabled={!table.getCanNextPage()}
+								className={
+									!table.getCanNextPage()
+										? "pointer-events-none opacity-50"
+										: undefined
+								}
+							/>
+						</PaginationItem>
+					</PaginationContent>
+				</Pagination>
+			</div>
 		</div>
 	);
 }

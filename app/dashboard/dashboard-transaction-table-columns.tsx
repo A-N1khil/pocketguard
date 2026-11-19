@@ -1,53 +1,11 @@
-import { type Transaction } from "@/models/transaction-model";
-import {
-	columnFilteringFeature,
-	columnVisibilityFeature,
-	createColumnHelper,
-	createFilteredRowModel,
-	createPaginatedRowModel,
-	createSortedRowModel,
-	filterFn_includesString,
-	rowPaginationFeature,
-	rowSelectionFeature,
-	rowSortingFeature,
-	sortFn_alphanumeric,
-	sortFn_text,
-	tableFeatures,
-} from "@tanstack/react-table";
+import type { Transaction } from "@/models/transaction-model";
 import TransactionFieldIcon from "@/components/transaction/transaction-field-icon";
-import { Pill, PillIndicator } from "@/components/kibo-ui/pill";
 import dayjs, { Dayjs } from "dayjs";
-import localizedFormat from "dayjs/plugin/localizedFormat";
-import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import { Pill, PillIndicator } from "@/components/kibo-ui/pill";
+import { createColumnHelper } from "@tanstack/react-table";
+import { BaseDataTableFeatures } from "@/components/transaction/transaction-table/transaction-table-base-features";
 
-dayjs.extend(localizedFormat);
-dayjs.extend(isSameOrBefore);
-
-export type TransactionTableData = Transaction & {
-	isUpdated?: boolean;
-};
-
-export const features = tableFeatures({
-	columnFilteringFeature,
-	columnVisibilityFeature,
-	rowPaginationFeature,
-	rowSelectionFeature,
-	rowSortingFeature,
-	filteredRowModel: createFilteredRowModel(),
-	paginatedRowModel: createPaginatedRowModel(),
-	sortedRowModel: createSortedRowModel(),
-	filterFns: { includesString: filterFn_includesString },
-	sortFns: { alphanumeric: sortFn_alphanumeric, text: sortFn_text },
-});
-
-// Pass this as the first generic argument to `ColumnDef`, `Column`, `Table`,
-// and `Row` so each type knows which feature APIs are available.
-export type DataTableFeatures = typeof features;
-
-const columnHelper = createColumnHelper<
-	DataTableFeatures,
-	TransactionTableData
->();
+const columnHelper = createColumnHelper<BaseDataTableFeatures, Transaction>();
 
 export const transactionColumns = columnHelper.columns([
 	columnHelper.accessor("timestamp", {
@@ -97,7 +55,7 @@ export const transactionColumns = columnHelper.columns([
 		},
 	}),
 	columnHelper.accessor(
-		(transaction: TransactionTableData) => transaction.category.name,
+		(transaction: Transaction) => transaction.category.name,
 		{
 			id: "category",
 			header: () => (
@@ -109,7 +67,7 @@ export const transactionColumns = columnHelper.columns([
 		},
 	),
 	columnHelper.accessor(
-		(transaction: TransactionTableData) => transaction.subCategory.name,
+		(transaction: Transaction) => transaction.subCategory.name,
 		{
 			id: "subCategory",
 			header: () => (
