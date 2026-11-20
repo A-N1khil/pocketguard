@@ -4,7 +4,10 @@ import {
 	createFilteredRowModel,
 	createPaginatedRowModel,
 	createSortedRowModel,
+	filterFn_equalsString,
 	filterFn_includesString,
+	filterFn_inDateRange,
+	filterFn_inNumberRange,
 	rowPaginationFeature,
 	rowSelectionFeature,
 	rowSortingFeature,
@@ -28,7 +31,12 @@ export const features = tableFeatures({
 	filteredRowModel: createFilteredRowModel(),
 	paginatedRowModel: createPaginatedRowModel(),
 	sortedRowModel: createSortedRowModel(),
-	filterFns: { includesString: filterFn_includesString },
+	filterFns: {
+		includesString: filterFn_includesString,
+		inNumberRange: filterFn_inNumberRange,
+		inDateRange: filterFn_inDateRange,
+		equals: filterFn_equalsString,
+	},
 	sortFns: { alphanumeric: sortFn_alphanumeric, text: sortFn_text },
 });
 

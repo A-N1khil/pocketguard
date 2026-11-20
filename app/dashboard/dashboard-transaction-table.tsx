@@ -2,10 +2,7 @@
 
 import { Transaction } from "@/models/transaction-model";
 import { useEffect, useState } from "react";
-import {
-	getAllTransactionsOfType,
-	getAllTransactions,
-} from "@/actions/transaction-actions";
+import { getAllTransactions } from "@/actions/transaction-actions";
 import TransactionDataTable from "@/components/transaction/transaction-table/transaction-data-table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTransactionTable } from "@/hooks/use-transaction-table";
@@ -32,16 +29,6 @@ export default function DashboardTransactionTable() {
 		columns: transactionColumns,
 	});
 
-	async function handleDebitOnly() {
-		setTransactions(
-			await getAllTransactionsOfType("DEBIT", { defaultTimestampSort: true }),
-		);
-	}
-
-	async function handleCreditOnly() {
-		// TODO: add filter to table, credit type transactions only
-	}
-
 	// TODO: Add tabs and other controls
 	return (
 		<>
@@ -50,11 +37,30 @@ export default function DashboardTransactionTable() {
 					<div id="table-actions" className="mb-2.5">
 						<Tabs defaultValue="all" className="w-100">
 							<TabsList>
-								<TabsTrigger value="all">All Transactions</TabsTrigger>
-								<TabsTrigger value="only-debit" onClick={handleDebitOnly}>
+								<TabsTrigger
+									value="all"
+									onClick={() =>
+										table
+											.getColumn("transactionType")
+											?.setFilterValue(undefined)
+									}
+								>
+									All Transactions
+								</TabsTrigger>
+								<TabsTrigger
+									value="only-debit"
+									onClick={() =>
+										table.getColumn("transactionType")?.setFilterValue("DEBIT")
+									}
+								>
 									DEBIT only
 								</TabsTrigger>
-								<TabsTrigger value="only-credit" onClick={handleCreditOnly}>
+								<TabsTrigger
+									value="only-credit"
+									onClick={() =>
+										table.getColumn("transactionType")?.setFilterValue("CREDIT")
+									}
+								>
 									CREDIT only
 								</TabsTrigger>
 							</TabsList>
