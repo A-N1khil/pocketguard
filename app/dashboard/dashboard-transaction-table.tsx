@@ -8,6 +8,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTransactionTable } from "@/hooks/use-transaction-table";
 
 import { transactionColumns } from "@/app/dashboard/dashboard-transaction-table-columns";
+import { Button } from "@/components/ui/button";
+import { IconArrowUpRight } from "@tabler/icons-react";
 
 export default function DashboardTransactionTable() {
 	const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -29,42 +31,55 @@ export default function DashboardTransactionTable() {
 		columns: transactionColumns,
 	});
 
-	// TODO: Add tabs and other controls
 	return (
 		<>
 			{transactions && (
 				<>
-					<div id="table-actions" className="mb-2.5">
-						<Tabs defaultValue="all" className="w-100">
-							<TabsList>
-								<TabsTrigger
-									value="all"
-									onClick={() =>
-										table
-											.getColumn("transactionType")
-											?.setFilterValue(undefined)
-									}
-								>
-									All Transactions
-								</TabsTrigger>
-								<TabsTrigger
-									value="only-debit"
-									onClick={() =>
-										table.getColumn("transactionType")?.setFilterValue("DEBIT")
-									}
-								>
-									DEBIT only
-								</TabsTrigger>
-								<TabsTrigger
-									value="only-credit"
-									onClick={() =>
-										table.getColumn("transactionType")?.setFilterValue("CREDIT")
-									}
-								>
-									CREDIT only
-								</TabsTrigger>
-							</TabsList>
-						</Tabs>
+					<div
+						id="table-actions"
+						className="grid grid-cols-2 gap-2 items-center mb-2.5 max-w-full"
+					>
+						<div className="justify-self-start">
+							<Tabs defaultValue="all">
+								<TabsList>
+									<TabsTrigger
+										value="all"
+										onClick={() =>
+											table
+												.getColumn("transactionType")
+												?.setFilterValue(undefined)
+										}
+									>
+										All Transactions
+									</TabsTrigger>
+									<TabsTrigger
+										value="only-debit"
+										onClick={() =>
+											table
+												.getColumn("transactionType")
+												?.setFilterValue("DEBIT")
+										}
+									>
+										DEBIT only
+									</TabsTrigger>
+									<TabsTrigger
+										value="only-credit"
+										onClick={() =>
+											table
+												.getColumn("transactionType")
+												?.setFilterValue("CREDIT")
+										}
+									>
+										CREDIT only
+									</TabsTrigger>
+								</TabsList>
+							</Tabs>
+						</div>
+						<div className="justify-self-end">
+							<Button type="button" className="justify-end">
+								Open in Transactions <IconArrowUpRight />
+							</Button>
+						</div>
 					</div>
 					<TransactionDataTable table={table} />
 				</>
