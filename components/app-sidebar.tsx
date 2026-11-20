@@ -13,8 +13,13 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { LayoutDashboardIcon, ListIcon, ChartBarIcon } from "lucide-react";
-import { IconPigMoney } from "@tabler/icons-react";
+import {
+	IconChartBar,
+	IconChartPie,
+	IconLayoutDashboard,
+	IconList,
+	IconPigMoney,
+} from "@tabler/icons-react";
 
 const data = {
 	user: {
@@ -26,18 +31,19 @@ const data = {
 		{
 			title: "Dashboard",
 			url: "/dashboard",
-			icon: <LayoutDashboardIcon />,
+			icon: <IconLayoutDashboard />,
 		},
 		{
 			title: "Transactions",
 			url: "/transactions",
-			icon: <ListIcon />,
+			icon: <IconList />,
 		},
 		{
 			title: "Analytics",
 			url: "/analytics",
-			icon: <ChartBarIcon />,
+			icon: <IconChartBar />,
 		},
+		{ title: "Budget", url: "/budget", icon: <IconChartPie /> },
 	],
 };
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
