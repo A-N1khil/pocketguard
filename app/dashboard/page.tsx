@@ -4,6 +4,11 @@ import { SectionCards } from "@/components/section-cards";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import DashboardTransactionTable from "@/app/dashboard/dashboard-transaction-table";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+	title: "Dashboard",
+};
 
 export default function Page() {
 	return (
