@@ -3,9 +3,9 @@
 	"version": "0.1.0",
 	"private": true,
 	"scripts": {
-		"dev": "next dev",
-		"build": "next build",
-		"start": "next start",
+		"dev": "test -f .env.dev && NODE_ENV=development bun --env-file=.env.dev run next dev",
+		"build": "NODE_ENV=production bun --env-file=.env run next build",
+		"start": "NODE_ENV=production bun --env-file=.env run next start",
 		"lint": "eslint"
 	},
 	"dependencies": {

@@ -2,11 +2,7 @@ import type { UseFormRegister } from "react-hook-form";
 import { useId, useState } from "react";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import type { TransactionFormValues } from "./create-transaction-form";
-import {
-	IconCalendarDollar,
-	IconChevronDown,
-	IconClock12,
-} from "@tabler/icons-react";
+import { IconChevronDown } from "@tabler/icons-react";
 import {
 	Popover,
 	PopoverContent,
@@ -16,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import dayjs from "dayjs";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
+import TransactionFieldIcon from "@/components/transaction/transaction-field-icon";
 
 type TransactionFormProps = {
 	register: UseFormRegister<TransactionFormValues>;
@@ -41,8 +38,7 @@ export default function TransactionFormDateTimePicker({
 			<div className="grid grid-cols-2 gap-4">
 				<Field data-invalid={Boolean(error)}>
 					<FieldLabel htmlFor={id}>
-						<IconCalendarDollar size={18} />
-						Date
+						<TransactionFieldIcon field="date" size={18} />
 					</FieldLabel>
 					<Popover open={open} onOpenChange={setOpen}>
 						<PopoverTrigger
@@ -85,8 +81,7 @@ export default function TransactionFormDateTimePicker({
 				</Field>
 				<Field data-invalid={Boolean(error)}>
 					<FieldLabel htmlFor={`${id}-time`}>
-						<IconClock12 size={18} />
-						Time
+						<TransactionFieldIcon field="time" size={18} />
 					</FieldLabel>
 					<Input
 						id={`${id}-time`}
