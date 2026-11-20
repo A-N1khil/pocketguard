@@ -11,6 +11,8 @@ import {
 import { CirclePlusIcon, MailIcon } from "lucide-react";
 import React, { useState } from "react";
 import TransactionForm from "@/components/transaction/create-transaction-form";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export function NavMain({
 	items,
@@ -27,6 +29,8 @@ export function NavMain({
 		openDialog,
 		setOpenDialog,
 	};
+
+	const pathName: string = usePathname();
 
 	return (
 		<>
@@ -56,7 +60,16 @@ export function NavMain({
 					<SidebarMenu>
 						{items.map((item) => (
 							<SidebarMenuItem key={item.title}>
-								<SidebarMenuButton tooltip={item.title}>
+								<SidebarMenuButton
+									tooltip={item.title}
+									isActive={pathName === item.url}
+									render={
+										<Link
+											href={item.url}
+											aria-current={pathName === item.url ? "page" : undefined}
+										/>
+									}
+								>
 									{item.icon}
 									<span>{item.title}</span>
 								</SidebarMenuButton>
