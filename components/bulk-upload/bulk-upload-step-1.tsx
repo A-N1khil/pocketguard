@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import LocalizedFormat from "dayjs/plugin/localizedFormat";
 import {
 	Card,
 	CardContent,
@@ -24,6 +25,8 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { ChangeEvent, useRef } from "react";
+
+dayjs.extend(LocalizedFormat);
 
 type BulkUploadStep1Props = {
 	file: File | undefined;

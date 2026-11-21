@@ -20,6 +20,7 @@ import {
 	IconCircleNumber3Filled,
 	IconCircleNumber4,
 	IconCircleNumber4Filled,
+	IconTableExclamation,
 	IconTableImport,
 	IconThumbUp,
 } from "@tabler/icons-react";
@@ -33,6 +34,20 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { BulkUploadStep1 } from "@/components/bulk-upload/bulk-upload-step-1";
 import { ComponentType, useEffect, useState } from "react";
+import { TempHoldTransaction } from "@/models/transaction-model";
+import { BulkUploadStep2 } from "@/components/bulk-upload/bulk-upload-step-2";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogMedia,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type IconComponent = ComponentType<{ size: number }>;
 
@@ -76,8 +91,14 @@ export default function BulkUploadTransactionDialog({
 	// CSV upload from Step 1
 	const [uploadedCSV, setUploadedCSV] = useState<File | undefined>();
 
+	// Temp transactions from Step 2
+	const [tempHoldTransactions, setTempHoldTransactions] = useState<
+		TempHoldTransaction[]
+	>([]);
+
 	const canAdvanceByStep: Record<number, boolean> = {
 		1: Boolean(uploadedCSV),
+		2: tempHoldTransactions.length > 0,
 	};
 
 	return (
@@ -143,6 +164,13 @@ export default function BulkUploadTransactionDialog({
 							{introStep === 1 && (
 								<BulkUploadStep1 file={uploadedCSV} setFile={setUploadedCSV} />
 							)}
+							{introStep === 2 && uploadedCSV && (
+								<BulkUploadStep2
+									file={uploadedCSV}
+									setTempHoldTransactions={setTempHoldTransactions}
+									tempHoldTransactions={tempHoldTransactions}
+								/>
+							)}
 						</div>
 					</div>
 				</div>
@@ -152,16 +180,41 @@ export default function BulkUploadTransactionDialog({
 						render={<Button variant="outline">Close</Button>}
 					/>
 					<div className="flex items-center gap-2">
-						<Button
-							type="button"
-							onClick={() => {
-								setIntroStep((prev) => prev - 1);
-							}}
-							hidden={introStep === 1}
-						>
-							<IconChevronLeft />
-							Previous
-						</Button>
+						<AlertDialog>
+							<AlertDialogTrigger
+								render={
+									<Button type="button" hidden={introStep === 1}>
+										<IconChevronLeft />
+										Previous
+									</Button>
+								}
+							/>
+							<AlertDialogContent size="sm">
+								<AlertDialogHeader>
+									<AlertDialogMedia className="bg-destructive/10 text-destructive dark:bg-destructive/20">
+										<IconTableExclamation />
+									</AlertDialogMedia>
+									<AlertDialogTitle>Go back?</AlertDialogTitle>
+									<AlertDialogDescription>
+										This <span className="underline font-semibold">might</span>{" "}
+										reset your progress so far. Are you sure?
+									</AlertDialogDescription>
+								</AlertDialogHeader>
+								<AlertDialogFooter>
+									<AlertDialogCancel variant="outline">
+										Cancel
+									</AlertDialogCancel>
+									<AlertDialogCancel
+										variant="destructive"
+										onClick={() => {
+											setIntroStep((prev) => prev - 1);
+										}}
+									>
+										Yes, Go Back
+									</AlertDialogCancel>
+								</AlertDialogFooter>
+							</AlertDialogContent>
+						</AlertDialog>
 						<Button
 							type="button"
 							onClick={() => {
