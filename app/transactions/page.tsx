@@ -37,7 +37,7 @@ export default function Page() {
 				onOpenChange={setOpenBulkUploadDialog}
 				modal={true}
 			>
-				<DialogContent className="h-[70dvh] w-[70vw] max-w-none grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-none">
+				<DialogContent className="h-auto w-[75vw] max-w-none grid-rows-[auto_minmax(0,1fr)_auto] sm:max-w-none">
 					<DialogHeader>
 						<Breadcrumb>
 							<BreadcrumbList>
