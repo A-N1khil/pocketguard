@@ -23,3 +23,8 @@ export interface CategoryDTO {
 	categoryName: string;
 	subCategories?: Map<number, SubCategoryDTO>;
 }
+
+export type TempHoldCategory = {
+	name: string;
+	subCategories?: string[];
+};

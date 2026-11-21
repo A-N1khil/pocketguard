@@ -38,7 +38,6 @@ import { TempHoldTransaction } from "@/models/transaction-model";
 import { BulkUploadStep2 } from "@/components/bulk-upload/bulk-upload-step-2";
 import {
 	AlertDialog,
-	AlertDialogAction,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -48,6 +47,7 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { TempHoldCategory } from "@/models/category-model";
 
 type IconComponent = ComponentType<{ size: number }>;
 
@@ -94,6 +94,10 @@ export default function BulkUploadTransactionDialog({
 	// Temp transactions from Step 2
 	const [tempHoldTransactions, setTempHoldTransactions] = useState<
 		TempHoldTransaction[]
+	>([]);
+	// Temp categories from Step 2
+	const [tempHoldCategories, setTempHoldCategories] = useState<
+		TempHoldCategory[]
 	>([]);
 
 	const canAdvanceByStep: Record<number, boolean> = {
@@ -169,6 +173,7 @@ export default function BulkUploadTransactionDialog({
 									file={uploadedCSV}
 									setTempHoldTransactions={setTempHoldTransactions}
 									tempHoldTransactions={tempHoldTransactions}
+									setTempHoldCategories={setTempHoldCategories}
 								/>
 							)}
 						</div>

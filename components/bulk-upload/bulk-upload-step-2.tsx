@@ -21,6 +21,7 @@ import {
 	IconFidgetSpinner,
 	IconHourglassLow,
 } from "@tabler/icons-react";
+import { TempHoldCategory } from "@/models/category-model";
 
 const validationStages = [
 	"Parse CSV",
@@ -36,12 +37,14 @@ type BulkUploadStep2Props = {
 	setTempHoldTransactions: (
 		tempHoldTransactions: TempHoldTransaction[],
 	) => void;
+	setTempHoldCategories: (tempHoldCategories: TempHoldCategory[]) => void;
 };
 
 export function BulkUploadStep2({
 	file,
 	setTempHoldTransactions,
 	tempHoldTransactions,
+	setTempHoldCategories,
 }: BulkUploadStep2Props) {
 	const [status, setStatus] = useState<{
 		file: File;
@@ -99,6 +102,7 @@ export function BulkUploadStep2({
 
 							if (update.type === "done") {
 								setTempHoldTransactions(update.transactions);
+								setTempHoldCategories(update.categories);
 								return;
 							}
 							if (update.type === "error") return;
@@ -124,7 +128,7 @@ export function BulkUploadStep2({
 
 		void validateFile();
 		return () => controller.abort();
-	}, [file, setTempHoldTransactions]);
+	}, [file, setTempHoldTransactions, setTempHoldCategories]);
 
 	return (
 		<>

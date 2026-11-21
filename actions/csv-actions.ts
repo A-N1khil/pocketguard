@@ -6,6 +6,7 @@ import localizedFormat from "dayjs/plugin/localizedFormat";
 import utc from "dayjs/plugin/utc";
 import Papa from "papaparse";
 import type { TempHoldTransaction } from "@/models/transaction-model";
+import { TempHoldCategory } from "@/models/category-model";
 
 dayjs.extend(customParseFormat);
 dayjs.extend(localizedFormat);
@@ -13,18 +14,13 @@ dayjs.extend(utc);
 
 type CSVRow = Partial<Record<string, string>>;
 
-type ImportedCategory = {
-	name: string;
-	subcategories: string[];
-};
-
 export type CSVValidationResponse =
 	| { type: "progress"; message: string; step: number }
 	| { type: "error"; message: string; step: number }
 	| {
 			type: "done";
 			transactions: TempHoldTransaction[];
-			categories: ImportedCategory[];
+			categories: TempHoldCategory[];
 	  };
 
 const requiredHeaders = [
