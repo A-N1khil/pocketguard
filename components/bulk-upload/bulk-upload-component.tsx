@@ -32,10 +32,13 @@ import {
 	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Progress } from "@/components/ui/progress";
-import { BulkUploadStep1 } from "@/components/bulk-upload/bulk-upload-step-1";
+import {
+	BulkUploadStep1,
+	BulkUploadStep2,
+	BulkUploadStep3,
+} from "@/components/bulk-upload/steps";
 import { ComponentType, useEffect, useState } from "react";
 import { TempHoldTransaction } from "@/models/transaction-model";
-import { BulkUploadStep2 } from "@/components/bulk-upload/bulk-upload-step-2";
 import {
 	AlertDialog,
 	AlertDialogCancel,
@@ -47,7 +50,7 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { TempHoldCategory } from "@/models/category-model";
+import type { CategorySchema, TempHoldCategory } from "@/models/category-model";
 
 type IconComponent = ComponentType<{ size: number }>;
 
@@ -86,7 +89,7 @@ export default function BulkUploadTransactionDialog({
 }: BulkUploadTransactionDialogProps) {
 	const { openDialog, setOpenDialog } = dialog;
 
-	const [introStep, setIntroStep] = useState<number>(1);
+	const [introStep, setIntroStep] = useState<number>(3); // FIXME: Revert back to 1
 
 	// CSV upload from Step 1
 	const [uploadedCSV, setUploadedCSV] = useState<File | undefined>();
@@ -95,9 +98,32 @@ export default function BulkUploadTransactionDialog({
 	const [tempHoldTransactions, setTempHoldTransactions] = useState<
 		TempHoldTransaction[]
 	>([]);
+	// FIXME: Need to revert the following lines after testing Step 3
+	const demoT: TempHoldCategory[] = [
+		{
+			name: "House",
+			subCategories: ["Rent"],
+		},
+		{
+			name: "Subscription",
+			subCategories: ["Netflix"],
+		},
+		{
+			name: "Income",
+			subCategories: ["Job", "Passive"],
+		},
+		{
+			name: "Travel",
+			subCategories: ["Job"],
+		},
+	];
 	// Temp categories from Step 2
-	const [tempHoldCategories, setTempHoldCategories] = useState<
-		TempHoldCategory[]
+	const [tempHoldCategories, setTempHoldCategories] =
+		useState<TempHoldCategory[]>(demoT); // FIXME: Remove after testing. Should be []
+
+	// CategorySchema[] from Step 3
+	const [insertedCategories, setInsertedCategories] = useState<
+		CategorySchema[]
 	>([]);
 
 	const canAdvanceByStep: Record<number, boolean> = {
@@ -165,15 +191,25 @@ export default function BulkUploadTransactionDialog({
 							/>
 						</div>
 						<div className="min-h-0 overflow-y-auto">
+							{/* Step 1: File upload */}
 							{introStep === 1 && (
 								<BulkUploadStep1 file={uploadedCSV} setFile={setUploadedCSV} />
 							)}
+
+							{/*Step 2: File Parse*/}
 							{introStep === 2 && uploadedCSV && (
 								<BulkUploadStep2
 									file={uploadedCSV}
 									setTempHoldTransactions={setTempHoldTransactions}
-									tempHoldTransactions={tempHoldTransactions}
 									setTempHoldCategories={setTempHoldCategories}
+								/>
+							)}
+
+							{/*	Step 3: Category updates*/}
+							{introStep === 3 && tempHoldCategories.length > 0 && (
+								<BulkUploadStep3
+									tempHoldCategories={tempHoldCategories}
+									categoriesUpdated={setInsertedCategories}
 								/>
 							)}
 						</div>

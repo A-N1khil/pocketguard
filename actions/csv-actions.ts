@@ -176,11 +176,11 @@ export async function* parseTransactionCsv(
 			subcategories.add(subCategoryName);
 		}
 
-		const categories = Array.from(
+		const categories: TempHoldCategory[] = Array.from(
 			subcategoriesByCategory,
 			([name, subcategories]) => ({
 				name,
-				subcategories: [...subcategories],
+				subCategories: [...subcategories],
 			}),
 		);
 

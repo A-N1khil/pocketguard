@@ -33,7 +33,6 @@ const validationStages = [
 
 type BulkUploadStep2Props = {
 	file: File;
-	tempHoldTransactions: TempHoldTransaction[];
 	setTempHoldTransactions: (
 		tempHoldTransactions: TempHoldTransaction[],
 	) => void;
@@ -43,7 +42,6 @@ type BulkUploadStep2Props = {
 export function BulkUploadStep2({
 	file,
 	setTempHoldTransactions,
-	tempHoldTransactions,
 	setTempHoldCategories,
 }: BulkUploadStep2Props) {
 	const [status, setStatus] = useState<{
@@ -51,12 +49,7 @@ export function BulkUploadStep2({
 		update: CSVValidationResponse;
 	}>();
 	const update = status?.file === file ? status.update : undefined;
-	let activeStep: number;
-	if (update?.type === "done" || tempHoldTransactions.length !== 0) {
-		activeStep = 6;
-	} else {
-		activeStep = update?.step ?? 1;
-	}
+	const activeStep: number = update?.type === "done" ? 6 : (update?.step ?? 1);
 
 	useEffect(() => {
 		const controller = new AbortController();
