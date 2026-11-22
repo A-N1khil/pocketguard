@@ -34,3 +34,11 @@ export interface CreateTransaction {
 export interface UpdateTransaction extends CreateTransaction {
 	id: number;
 }
+
+export interface TempHoldTransaction extends Omit<
+	CreateTransaction,
+	"categoryId" | "subCategoryId"
+> {
+	categoryName: string;
+	subCategoryName: string;
+}
